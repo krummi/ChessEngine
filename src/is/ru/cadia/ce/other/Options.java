@@ -33,7 +33,7 @@ public class Options {
         Option[] options = {
                 new Option("Hash", (2 << 18)),
                 new Option("OwnBook", true),
-                new Option("Book File", "/home/krummi/Desktop/Chess-Engine/openings.txt")
+                new Option("Book File", "openings.txt")
         };
 
         // Puts the array into the map.

@@ -105,7 +105,6 @@ public class Benchmark implements ProtocolHandler {
 
         Search search = new Search(null);
 
-        long sumOfCounter = 0;
         long sum = 0, qsum = 0;
         long before = System.currentTimeMillis();
 
@@ -130,7 +129,6 @@ public class Benchmark implements ProtocolHandler {
         double nodesPerSecond = (double) sum / (elapsed / 1000.0d);
 
         System.out.printf("\n==========================\n");
-        System.out.printf("Stuff coutner :\t %d\n", sumOfCounter);
         System.out.printf("Nodes searched:\t %d (q: %d - %.1f%%)\n", sum, qsum, ((double) qsum / sum) * 100);
         System.out.printf("Time taken (ms): %d\n", elapsed);
         System.out.printf("Nodes/second:\t %.1f\n", nodesPerSecond);

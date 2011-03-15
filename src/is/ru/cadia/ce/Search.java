@@ -2,7 +2,6 @@ package is.ru.cadia.ce;
 
 import is.ru.cadia.ce.board.Board;
 import is.ru.cadia.ce.board.Evaluation;
-import is.ru.cadia.ce.board.MoveGenerator;
 import is.ru.cadia.ce.other.Constants;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
 import is.ru.cadia.ce.transposition.TranspositionTable;
@@ -11,15 +10,15 @@ public class Search implements Constants {
 
     // Constants
 
-    private static final boolean DO_MULTI_CUT = true;
+    public static boolean DO_MULTI_CUT = true;
     private static final int MC_EXPAND = 10;
     private static final int MC_REDUCTION = 2;
     private static final int MC_CUTOFFS = 3;
 
-    private static final boolean DO_NULL_MOVES = true;
+    public static boolean DO_NULL_MOVES = true;
     private static final int NULL_MOVE_REDUCTION = 2;
 
-    private static final boolean DO_LMR = true;
+    public static boolean DO_LMR = true;
     private static final int LMR_FULL_DEPTH_MOVES = 4;
 
     public static final int HASH_ALPHA = 0;
@@ -32,9 +31,7 @@ public class Search implements Constants {
     // Variables
 
     public TranspositionTable transTable;   // A instance of a transposition table.
-
     private MoveSelector[] selectors;       // The selectors used for each ply.
-    private MoveGenerator generator;        // The MoveGenerator being used
     private ProtocolHandler handler;        // The ProtocolHandler-object associated
 
     // TODO: Fix these:
@@ -56,9 +53,6 @@ public class Search implements Constants {
 
         // Sets the ProtocolHandler
         this.handler = handler;
-
-        // Initializes the instance
-        generator = MoveGenerator.getInstance();
 
         // Initializes the PlyInfo instances that will be used.
         selectors = new MoveSelector[MAX_PLY];

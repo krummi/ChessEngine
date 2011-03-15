@@ -18,7 +18,7 @@ public class Application implements Constants, FENs {
     // Constants
 
     public final static String NAME = "Ziggy";
-    public final static String VERSION = "v0.2";
+    public final static String VERSION = "v0.6";
     public final static String AUTHOR = "Hrafn Eiriksson <hrafne08@ru.is>";
 
     private final BufferedReader reader;
@@ -156,17 +156,44 @@ public class Application implements Constants, FENs {
 
         if (args.length > 0) {
 
-            HashMap<String, String> options = new HashMap<String, String>();
+            if (args[0].equals("bench")) {
 
-            for (int i = 1; i < args.length; i++) {
+                HashMap<String, String> options = new HashMap<String, String>();
 
-                String[] tokens = args[i].split("=");
-                assert tokens.length == 2;
+                for (int i = 1; i < args.length; i++) {
 
-                options.put(tokens[0].toLowerCase(), tokens[1].toLowerCase());
+                    String[] tokens = args[i].split("=");
+                    assert tokens.length == 2;
+
+                    options.put(tokens[0].toLowerCase(), tokens[1].toLowerCase());
+                }
+
+                Benchmark bench = new Benchmark(options);
+
+            } else {
+
+                // TODO: Code duplication hack.
+
+                Search.DO_MULTI_CUT = false;
+                Search.DO_LMR = false;
+                Search.DO_NULL_MOVES = false;
+
+                for (String s : args) {
+                    if (s.equals("mc")) Search.DO_MULTI_CUT = true;
+                    if (s.equals("lmr")) Search.DO_LMR = true;
+                    if (s.equals("nm")) Search.DO_NULL_MOVES = true;
+                }
+
+                try {
+                    app.start();
+                } catch (IOException ioex) {
+                    System.exit(-1);
+                } catch (Exception ex) {
+                    System.out.println("!!! Exception occurred.");
+                    ex.printStackTrace(System.out);
+                }
+
             }
-
-            Benchmark bench = new Benchmark(options);
 
         } else {
             try {

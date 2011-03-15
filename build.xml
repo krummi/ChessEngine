@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<project name="ChessEngine" basedir="." default="build">
+    <!-- Properties file to (automated continuous integration-server specific) -->
+    <property name="src" value="src"/>
+    <property name="out" value="out"/>
+    <property name="name" value="${ant.project.name}"/>
+
+    <!-- Update repo -->
+    <target name="git">
+        <exec executable="git">
+            <arg value="pull"/>
+        </exec>
+    </target>
+
+    <!-- Initalize -->
+    <target name="init" depends="git" description="Create the needed files">
+        <mkdir dir="${out}" />
+	<mkdir dir="${out}/classes" />
+	<mkdir dir="${out}/jar" />
+    </target>
+
+    <!-- Clean -->
+    <target name="clean" description="Cleans up the build directories">
+        <delete dir="${out}"/>
+    </target>
+
+    <!-- Build/compile -->
+    <target name="build" depends="init" description="Compile main source tree java files">
+        <javac destdir="${out}/classes" source="1.5" target="1.5" debug="true">
+            <src path="${src}"/>
+        </javac>
+    </target>
+
+    <!-- Create a jar file -->
+    <target name="jar" depends="build">
+        <mkdir dir="${out}/jar" />
+	<jar destfile="${out}/jar/ziggy.jar" basedir="${out}/classes">
+	    <manifest>
+	        <attribute name="Main-Class" value="is.ru.cadia.ce.Application" />
+	    </manifest>
+	</jar>
+    </target>
+
+</project>
