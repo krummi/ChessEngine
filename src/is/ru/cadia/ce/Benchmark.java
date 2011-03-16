@@ -14,7 +14,7 @@ public class Benchmark implements ProtocolHandler {
 
     // Constants
 
-    private static final String PARAM_FEN = "fenfile";
+    private static final String PARAM_FEN = "file";
     private static final String PARAM_TYPE = "type";
     private static final String PARAM_DEPTH = "depth";
     private static final String PARAM_TIME = "time";
@@ -52,7 +52,7 @@ public class Benchmark implements ProtocolHandler {
             } else {
                 param = Integer.parseInt(options.get(PARAM_DEPTH));
             }
-            
+
         }
 
         try {
@@ -150,28 +150,47 @@ public class Benchmark implements ProtocolHandler {
             System.out.printf("\nPosition %d/%d: %s\n\n", (i + 1), positions.size(), line);
 
             String[] tokens = line.split(" ");
-            int indexOfBM = -1;
+            int indexOfBM = -1, indexOfAM = -1;
             for (int a = 0; a < tokens.length; a++) {
                 String s = tokens[a];
                 if (s.equals("bm")) {
                     indexOfBM = a;
-                    break;
+                } else if (s.equals("am")) {
+                    indexOfAM = a;
                 }
             }
-            if (indexOfBM == -1) {
+            if (indexOfBM == -1 && indexOfAM == -1) {
                 System.err.printf("Line %d does not contain a 'bm' section.\n", (i + 1));
                 break;
             }
 
+            ArrayList<String> avoidMoves = new ArrayList<String>();
             ArrayList<String> bestMoves = new ArrayList<String>();
 
-            for (int a = indexOfBM + 1; ; a++) {
-                String move = tokens[a];
-                if (move.endsWith(";")) {
-                    bestMoves.add(move.substring(0, move.length() - 1));
-                    break;
+            if (indexOfBM > -1) {
+
+                for (int a = indexOfBM + 1; ; a++) {
+                    String move = tokens[a];
+                    if (move.endsWith(";")) {
+                        bestMoves.add(move.substring(0, move.length() - 1));
+                        break;
+                    }
+                    bestMoves.add(move);
                 }
-                bestMoves.add(move);
+
+            }
+
+            // TODO: Code duplication of death.
+
+            if (indexOfAM > -1) {
+                for (int a = indexOfAM + 1; ; a++) {
+                    String move = tokens[a];
+                    if (move.endsWith(";")) {
+                        avoidMoves.add(move.substring(0, move.length() - 1));
+                        break;
+                    }
+                    bestMoves.add(move);
+                }
             }
 
             Board board = new Board();
@@ -182,15 +201,29 @@ public class Benchmark implements ProtocolHandler {
             boolean positionSolved = false;
 
             System.out.println("\nMy best move:\t\t\t" + Move.toSAN(board, bestMove));
-            System.out.print("Corrent best move(s):\t");
-            for (int a = 0; a < bestMoves.size(); a++) {
-                String move = bestMoves.get(a);
-                if (move.equals(Move.toSAN(board, bestMove))) positionSolved = true;
-                if (a == bestMoves.size() - 1) System.out.print(move);
-                else System.out.print(move + ", ");
+
+            if (bestMoves.size() > 0) {
+                System.out.print("Corrent best move(s):\t");
+                for (int a = 0; a < bestMoves.size(); a++) {
+                    String move = bestMoves.get(a);
+                    if (move.equals(Move.toSAN(board, bestMove))) positionSolved = true;
+                    if (a == bestMoves.size() - 1) System.out.print(move);
+                    else System.out.print(move + ", ");
+                }
+                System.out.println("");
             }
 
-            System.out.println("");
+            if (avoidMoves.size() > 0) {
+                System.out.print("Avoid move(s):\t\t\t");
+                for (int a = 0; a < avoidMoves.size(); a++) {
+                    String move = avoidMoves.get(a);
+                    if (move.equals(Move.toSAN(board, bestMove)))
+                        positionSolved = false; // Would this ever happen?
+                    if (a == avoidMoves.size() - 1) System.out.print(move);
+                    else System.out.print(move + ", ");
+                }
+                System.out.println("");
+            }
 
             if (positionSolved) {
                 System.out.println("Correct!");

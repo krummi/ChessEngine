@@ -150,60 +150,54 @@ public class Application implements Constants, FENs {
         }
     }
 
+    private HashMap<String, String> parseParams(String[] args) {
+
+        HashMap<String, String> params = new HashMap<String, String>();
+
+        for (String s : args) {
+            String[] tokens = s.split("=");
+            
+            assert tokens.length == 1 || tokens.length == 2;
+
+            if (tokens.length == 1) {
+                params.put(tokens[0].toLowerCase(), "true");
+            } else if (tokens.length == 2) {
+                params.put(tokens[0].toLowerCase(), tokens[1].toLowerCase());
+            }
+        }
+
+        return params;
+    }
+
     public static void main(String[] args) {
 
         Application app = new Application();
 
-        if (args.length > 0) {
+        HashMap<String, String> params = app.parseParams(args);
 
-            if (args[0].equals("bench")) {
+        // TODO: Put this elsewhere?
 
-                HashMap<String, String> options = new HashMap<String, String>();
+        Search.DO_MULTI_CUT = true;
+        Search.DO_LMR = true;
+        Search.DO_NULL_MOVES = true;
 
-                for (int i = 1; i < args.length; i++) {
+        if (params.containsKey("mc") &&  params.get("mc").equals("off"))  Search.DO_MULTI_CUT = false;
+        if (params.containsKey("lmr") && params.get("lmr").equals("off")) Search.DO_LMR = false;
+        if (params.containsKey("nm") &&  params.get("nm").equals("off"))  Search.DO_NULL_MOVES = false;
 
-                    String[] tokens = args[i].split("=");
-                    assert tokens.length == 2;
+        if (params.containsKey("bench")) {
 
-                    options.put(tokens[0].toLowerCase(), tokens[1].toLowerCase());
-                }
-
-                Benchmark bench = new Benchmark(options);
-
-            } else {
-
-                // TODO: Code duplication hack.
-
-                Search.DO_MULTI_CUT = false;
-                Search.DO_LMR = false;
-                Search.DO_NULL_MOVES = false;
-
-                for (String s : args) {
-                    if (s.equals("mc")) Search.DO_MULTI_CUT = true;
-                    if (s.equals("lmr")) Search.DO_LMR = true;
-                    if (s.equals("nm")) Search.DO_NULL_MOVES = true;
-                }
-
-                try {
-                    app.start();
-                } catch (IOException ioex) {
-                    System.exit(-1);
-                } catch (Exception ex) {
-                    System.out.println("!!! Exception occurred.");
-                    ex.printStackTrace(System.out);
-                }
-
-            }
+            Benchmark bench = new Benchmark(params);
 
         } else {
+
             try {
                 app.start();
-            } catch (IOException ioex) {
-                System.exit(-1);
             } catch (Exception ex) {
-                System.out.println("!!! Exception occurred.");
-                ex.printStackTrace(System.out);
+                System.err.println("An application exception occurred.");
+                ex.printStackTrace(System.err);
             }
+
         }
 
     }
