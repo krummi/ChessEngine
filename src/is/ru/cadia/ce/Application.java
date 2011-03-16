@@ -156,13 +156,18 @@ public class Application implements Constants, FENs {
 
         for (String s : args) {
             String[] tokens = s.split("=");
-            
+
             assert tokens.length == 1 || tokens.length == 2;
 
             if (tokens.length == 1) {
                 params.put(tokens[0].toLowerCase(), "true");
             } else if (tokens.length == 2) {
-                params.put(tokens[0].toLowerCase(), tokens[1].toLowerCase());
+                if (tokens[0].equals("file")) {
+                    // Do NOT put the filename in lowercase!
+                    params.put(tokens[0].toLowerCase(), tokens[1]);
+                } else {
+                    params.put(tokens[0].toLowerCase(), tokens[1].toLowerCase());
+                }
             }
         }
 
@@ -181,9 +186,9 @@ public class Application implements Constants, FENs {
         Search.DO_LMR = true;
         Search.DO_NULL_MOVES = true;
 
-        if (params.containsKey("mc") &&  params.get("mc").equals("off"))  Search.DO_MULTI_CUT = false;
+        if (params.containsKey("mc")  && params.get("mc").equals("off"))  Search.DO_MULTI_CUT = false;
         if (params.containsKey("lmr") && params.get("lmr").equals("off")) Search.DO_LMR = false;
-        if (params.containsKey("nm") &&  params.get("nm").equals("off"))  Search.DO_NULL_MOVES = false;
+        if (params.containsKey("nm")  && params.get("nm").equals("off"))  Search.DO_NULL_MOVES = false;
 
         if (params.containsKey("bench")) {
 
