@@ -132,6 +132,9 @@ public class Benchmark implements ProtocolHandler {
         System.out.printf("Nodes searched:\t %d (q: %d - %.1f%%)\n", sum, qsum, ((double) qsum / sum) * 100);
         System.out.printf("Time taken (ms): %d\n", elapsed);
         System.out.printf("Nodes/second:\t %.1f\n", nodesPerSecond);
+        System.out.printf("Mcprunes:\t %d\n", search.mcprunes);
+        System.out.printf("True-cut-nodes:\t %d\n", search.trueCutNodes);
+        System.out.printf("False-cut-nodes:\t %d\n", search.falseCutNodes);
 
     }
 
@@ -245,9 +248,8 @@ public class Benchmark implements ProtocolHandler {
         System.out.printf("Time taken (ms): %d\n", elapsed);
         System.out.printf("Nodes/second:\t %.1f\n", nodesPerSecond);
         System.out.printf("Mcprunes:\t %d\n", search.mcprunes);
-        System.out.printf("One:\t %d\n", search.one);
-        System.out.printf("Two:\t %d\n", search.two);
-        System.out.printf("Three:\t %d\n", search.three);
+        System.out.printf("True-cut-nodes:\t %d\n", search.trueCutNodes);
+        System.out.printf("False-cut-nodes:\t %d\n", search.falseCutNodes);
     }
 
     public void handle(String message) {
