@@ -2,6 +2,7 @@ package is.ru.cadia.ce;
 
 import is.ru.cadia.ce.board.Board;
 import is.ru.cadia.ce.board.Evaluation;
+import is.ru.cadia.ce.board.Square;
 import is.ru.cadia.ce.other.Constants;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
 import is.ru.cadia.ce.transposition.TranspositionTable;
@@ -13,7 +14,7 @@ public class Search implements Constants {
     public static boolean DO_MULTI_CUT = true;
     private static final int MC_EXPAND = 10;
     private static final int MC_REDUCTION = 2;
-    private static final int MC_CUTOFFS = 3;
+    private static final int MC_CUTOFFS = 2;
 
     public static boolean DO_NULL_MOVES = true;
     private static final int NULL_MOVE_REDUCTION = 2;
@@ -37,7 +38,6 @@ public class Search implements Constants {
     // TODO: Fix these:
 
     private boolean useFixedDepth = false;
-    private long noOfNodes;
     private int timeForThisMove;
 
     private int pollForStopInterval = TIME_CHECK_INTERVAL;
@@ -73,8 +73,6 @@ public class Search implements Constants {
     public int think(Board board, int depth, int nodes) {
 
         // Time management
-
-        // TODO: Add "fixed time".
 
         useFixedDepth = (depth != 0);
 
@@ -205,6 +203,12 @@ public class Search implements Constants {
         return alpha;
     }
 
+    public int mcprunes = 0;
+
+    public int one = 0;
+    public int two = 0;
+    public int three = 0;
+
     public int alphaBeta(Board board, int depth, int ply, int alpha, int beta,
                          boolean nmAllowed, boolean mcAllowed) {
 
@@ -291,6 +295,7 @@ public class Search implements Constants {
         if (DO_MULTI_CUT && depth >= MC_REDUCTION && mcAllowed) {
 
             int c = 0;
+            //int[] cuts = new int[NO_OF_PIECES + 1];
 
             for (; queueIndex < MC_EXPAND; queueIndex++) {
 
@@ -300,8 +305,24 @@ public class Search implements Constants {
 
                 if (eval >= beta) {
                     c++;
+
+                    //cuts[Square.getPiece(board.squares[Move.getFrom(move)])] ++;
+
                     if (c == MC_CUTOFFS) {
-                        //System.out.println("mc-prune occurred!");
+
+                        mcprunes ++;
+
+                        /*int max = 0;
+                        for (int i : cuts) {
+                            max = Math.max(max, i);
+                        }
+
+                        assert max >= 1 && max <= Search.MC_CUTOFFS;
+
+                        if (max == 1) one++;
+                        if (max == 2) two++;
+                        if (max == 3) three++;*/
+
                         return beta;
                     }
                 }
