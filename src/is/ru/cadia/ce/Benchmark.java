@@ -7,6 +7,7 @@ import is.ru.cadia.ce.test.Testing;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -102,7 +103,6 @@ public class Benchmark implements ProtocolHandler {
     }
 
     private void depthTesting(int depth) {
-
         Search search = new Search(null);
 
         long sum = 0, qsum = 0;
@@ -111,7 +111,6 @@ public class Benchmark implements ProtocolHandler {
         for (int i = 0; i < positions.size(); i++) {
 
             String line = positions.get(i);
-
             System.out.printf("\nPosition %d/%d: %s\n\n", (i + 1), positions.size(), line);
 
             Board board = new Board();
@@ -125,17 +124,7 @@ public class Benchmark implements ProtocolHandler {
             search.transTable.clear();
         }
 
-        long elapsed = System.currentTimeMillis() - before;
-        double nodesPerSecond = (double) sum / (elapsed / 1000.0d);
-
-        System.out.printf("\n==========================\n");
-        System.out.printf("Nodes searched:\t %d (q: %d - %.1f%%)\n", sum, qsum, ((double) qsum / sum) * 100);
-        System.out.printf("Time taken (ms): %d\n", elapsed);
-        System.out.printf("Nodes/second:\t %.1f\n", nodesPerSecond);
-        System.out.printf("Mcprunes:\t %d\n", search.mcprunes);
-        System.out.printf("True-cut-nodes:\t %d\n", search.trueCutNodes);
-        System.out.printf("False-cut-nodes:\t %d\n", search.falseCutNodes);
-
+        printInfo(search, sum, qsum, before, new String[]{});
     }
 
     public void suiteTesting(int depth) {
@@ -183,7 +172,7 @@ public class Benchmark implements ProtocolHandler {
 
             }
 
-            // TODO: Code duplication of death.
+            // TODO: Horrendous code duplication.
 
             if (indexOfAM > -1) {
                 for (int a = indexOfAM + 1; ; a++) {
@@ -239,17 +228,35 @@ public class Benchmark implements ProtocolHandler {
             search.transTable.clear();
         }
 
+        String[] additionalInfo = {
+                String.format("%16s: %d/%d (%.1f%%)", "Solved", solved, positions.size(), ((double) solved / positions.size()) * 100)
+        };
+
+        printInfo(search, sum, qsum, before, additionalInfo);
+    }
+
+    private void printInfo(Search search, long sum, long qsum, long before, String[] additionalInfo) {
+
         long elapsed = System.currentTimeMillis() - before;
         double nodesPerSecond = (double) sum / (elapsed / 1000.0d);
 
         System.out.printf("\n==========================\n");
-        System.out.printf("Solved:\t\t\t %d/%d (%.1f%%)\n", solved, positions.size(), ((double) solved / positions.size()) * 100);
-        System.out.printf("Nodes searched:\t %d (q: %d - %.1f%%)\n", sum, qsum, ((double) qsum / sum) * 100);
-        System.out.printf("Time taken (ms): %d\n", elapsed);
-        System.out.printf("Nodes/second:\t %.1f\n", nodesPerSecond);
-        System.out.printf("Mcprunes:\t %d\n", search.mcprunes);
-        System.out.printf("True-cut-nodes:\t %d\n", search.trueCutNodes);
-        System.out.printf("False-cut-nodes:\t %d\n", search.falseCutNodes);
+        for (String s : additionalInfo) {
+            System.out.println(s);
+        }
+        System.out.printf("%16s: %d (q: %d - %.1f%%)\n", "Nodes searched", sum, qsum, ((double) qsum / sum) * 100);
+        System.out.printf("%16s: %d\n", "Time taken (ms)", elapsed);
+        System.out.printf("%16s: %.1f\n", "Nodes/second", nodesPerSecond);
+        System.out.printf("%16s: %d\n", "Mcprunes", search.mcprunes);
+        System.out.printf("%16s: %d\n", "Before MC", search.before);
+        System.out.printf("%16s: %d\n", "Doing MC", search.after);
+        System.out.printf("%16s: %d\n", "TransFound", search.transFound);
+        System.out.printf("%16s: %d\n", "TransLessThan", search.transLessDepth);
+        System.out.printf("%16s: %d\n", "TransNotFound", search.transNotFound);
+        System.out.printf("%16s: %d\n", "TransExact", search.transExact);
+        System.out.printf("%16s: %d\n", "TransAlpha", search.transAlpha);
+        System.out.printf("%16s: %d", "TransBeta", search.transBeta);
+
     }
 
     public void handle(String message) {

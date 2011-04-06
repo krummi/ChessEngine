@@ -2,7 +2,6 @@ package is.ru.cadia.ce;
 
 import is.ru.cadia.ce.board.Board;
 import is.ru.cadia.ce.board.Evaluation;
-import is.ru.cadia.ce.board.Square;
 import is.ru.cadia.ce.other.Constants;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
 import is.ru.cadia.ce.transposition.TranspositionTable;
@@ -162,13 +161,13 @@ public class Search implements Constants {
             board.make(move);
 
             if (evalType == HASH_EXACT) { // Do a PV-search
-                eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true, true);
+                eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true);
 
                 if (eval > alpha && eval < beta) {
-                    eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true, true);
+                    eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true);
                 }
             } else {
-                eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true, true);
+                eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true);
             }
 
             board.retract(move);
@@ -209,10 +208,10 @@ public class Search implements Constants {
     public int two = 0;
     public int three = 0;
 
-    public int trueCutNodes = 0, falseCutNodes = 0;
+    public long transFound = 0, transLessDepth = 0, transNotFound = 0, transExact = 0, transAlpha = 0, transBeta = 0;
+    public long before = 0, after = 0;
 
-    public int alphaBeta(Board board, int depth, int ply, int alpha, int beta,
-                         boolean nmAllowed, boolean mcAllowed) {
+    public int alphaBeta(Board board, int depth, int ply, int alpha, int beta, boolean nmAllowed) {
 
         if (!useFixedDepth && --pollForStopInterval == 0) {
             pollForStopInterval = TIME_CHECK_INTERVAL;
@@ -224,21 +223,38 @@ public class Search implements Constants {
             }
         }
 
-        nodesSearched++; // Increment the nodes searched!
+        nodesSearched++; // Increment the nodes searched
 
         // TODO: Repetition detection!
 
-        // Check in the transposition table
+        boolean mcAllowed = false;
+
+        // Transposition table lookup
         TranspositionTable.HashEntry entry = transTable.get(board.key);
 
-        if (entry != null && entry.depth >= depth) {
-            if (entry.type == HASH_EXACT) {
-                return entry.eval;
-            } else if (entry.type == HASH_ALPHA && entry.eval <= alpha) {
-                return entry.eval; // TODO: change to return alpha?
-            } else if (entry.type == HASH_BETA && entry.eval >= beta) {
-                return entry.eval; // TODO: change to return beta?
+        if (entry != null) {
+            transFound ++;
+            if (entry.depth >= depth) {
+                if (entry.type == HASH_EXACT) {
+                    return entry.eval;
+                } else if (entry.type == HASH_ALPHA && entry.eval <= alpha) {
+                    return entry.eval; // TODO: change to return alpha?
+                } else if (entry.type == HASH_BETA && entry.eval >= beta) {
+                    return entry.eval; // TODO: change to return beta?
+                }
+            } else {
+                transLessDepth++;
+                mcAllowed = true;
+                if (entry.type == HASH_EXACT) {
+                    transExact++;
+                } else if (entry.type == HASH_ALPHA && entry.eval <= alpha) {
+                    transAlpha++;
+                } else if (entry.type == HASH_BETA && entry.eval >= beta) {
+                    transBeta++;
+                }
             }
+        } else {
+            transNotFound++;
         }
 
         int eval;
@@ -272,7 +288,7 @@ public class Search implements Constants {
             int epSquare = board.epSquare;
 
             board.makeNullMove();
-            eval = -alphaBeta(board, depth - NULL_MOVE_REDUCTION, ply + 1, -beta, -beta + 1, false, !mcAllowed);
+            eval = -alphaBeta(board, depth - NULL_MOVE_REDUCTION, ply + 1, -beta, -beta + 1, false);
             board.retractNullMove(epSquare);
 
             if (eval >= beta) {
@@ -287,22 +303,24 @@ public class Search implements Constants {
             return 0;
         }
 
-        boolean isExpectedCutNode = false;
         int bestEval = -Value.INFINITY, bestMove = Move.MOVE_NONE, evalType = HASH_ALPHA;
-
         int[] moveQueue = new int[MC_EXPAND];
         moveQueue[0] = move;
-        int queueIndex = 1, queueSize = 0;
+        int queueIndex = 0, queueSize = 0;
+
+        before++;
 
         if (DO_MULTI_CUT && depth >= MC_REDUCTION && mcAllowed) {
+
+            after++;
 
             int c = 0;
             //int[] cuts = new int[NO_OF_PIECES + 1];
 
-            for (; queueIndex < MC_EXPAND; queueIndex++) {
+            while (true) {
 
                 board.make(move);
-                eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true, !mcAllowed);
+                eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true);
                 board.retract(move);
 
                 if (eval >= beta) {
@@ -312,7 +330,7 @@ public class Search implements Constants {
 
                     if (c == MC_CUTOFFS) {
 
-                        mcprunes ++;
+                        mcprunes++;
 
                         /*int max = 0;
                         for (int i : cuts) {
@@ -325,13 +343,12 @@ public class Search implements Constants {
                         if (max == 2) two++;
                         if (max == 3) three++;*/
 
-                        isExpectedCutNode = true;
-                        break;
-                        //return beta;
+                        return beta;
                     }
                 }
 
-                assert !isExpectedCutNode;
+                queueIndex++;
+                if (queueIndex == MC_EXPAND) break;
 
                 move = selector.getNextMove();
                 if (move == Move.MOVE_NONE) break;
@@ -356,20 +373,22 @@ public class Search implements Constants {
                 int type = Move.getType(move);
                 if (DO_LMR && movesSearched >= LMR_FULL_DEPTH_MOVES && depth >= 3 && !isCheck
                         && !Move.isCapture(type) && !Move.isPromotion(type)) {
-                    eval = -alphaBeta(board, depth - 2, ply + 1, -alpha - 1, -alpha, true, !mcAllowed);
+                    eval = -alphaBeta(board, depth - 2, ply + 1, -alpha - 1, -alpha, true);
                 } else {
                     eval = alpha + 1;
                 }
 
                 if (eval > alpha) {
-                    eval = -alphaBeta(board, depth - 1, ply + 1, -alpha - 1, -alpha, true, !mcAllowed);
+
+                    // Principal variation search
+                    eval = -alphaBeta(board, depth - 1, ply + 1, -alpha - 1, -alpha, true);
 
                     if (eval > alpha && eval < beta) {
-                        eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true, !mcAllowed);
+                        eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true);
                     }
                 }
             } else {
-                eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true, !mcAllowed);
+                eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true);
             }
 
             board.retract(move);
@@ -378,9 +397,6 @@ public class Search implements Constants {
 
             if (eval > bestEval) {
                 if (eval >= beta) {
-                    if (isExpectedCutNode) {
-                        trueCutNodes ++;
-                    }
 
                     // Beta cutoff
                     if (!shouldWeStop) {
@@ -410,10 +426,6 @@ public class Search implements Constants {
             } else {
                 move = moveQueue[queueIndex++];
             }
-        }
-
-        if (isExpectedCutNode) {
-            falseCutNodes++;
         }
 
         return alpha;
