@@ -191,9 +191,7 @@ public class Application implements Constants, FENs {
         if (params.containsKey("nm")  && params.get("nm").equals("off"))  Search.DO_NULL_MOVES = false;
 
         if (params.containsKey("bench")) {
-
             Benchmark bench = new Benchmark(params);
-
         } else {
 
             try {

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="ChessEngine" basedir="." default="build">
+<project name="ChessEngine" basedir="." default="jar">
     <!-- Properties file to (automated continuous integration-server specific) -->
     <property name="src" value="src"/>
     <property name="out" value="out"/>
@@ -15,9 +15,9 @@
 
     <!-- Initalize -->
     <target name="init" depends="git" description="Create the needed files">
-        <mkdir dir="${out}" />
-	<mkdir dir="${out}/classes" />
-	<mkdir dir="${out}/jar" />
+        <mkdir dir="${out}"/>
+        <mkdir dir="${out}/classes"/>
+        <mkdir dir="${out}/jar"/>
     </target>
 
     <!-- Clean -->
@@ -34,12 +34,13 @@
 
     <!-- Create a jar file -->
     <target name="jar" depends="build">
-        <mkdir dir="${out}/jar" />
-	<jar destfile="${out}/jar/ziggy.jar" basedir="${out}/classes">
-	    <manifest>
-	        <attribute name="Main-Class" value="is.ru.cadia.ce.Application" />
-	    </manifest>
-	</jar>
+        <mkdir dir="${out}/jar"/>
+        <copy todir="${out}/jar" file="openings.txt" />
+        <jar destfile="${out}/jar/ziggy.jar" basedir="${out}/classes">
+            <manifest>
+                <attribute name="Main-Class" value="is.ru.cadia.ce.Application"/>
+            </manifest>
+        </jar>
     </target>
 
 </project>

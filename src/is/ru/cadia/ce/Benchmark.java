@@ -47,7 +47,10 @@ public class Benchmark implements ProtocolHandler {
 
         } else if (type.equals("suite")) {
 
+            fileName = "suites/" + fileName;
+
             assert options.get(PARAM_DEPTH) != null || options.get(PARAM_TIME) != null;
+
             if (options.get(PARAM_TIME) != null) {
                 seconds = Integer.parseInt(options.get(PARAM_TIME));
             } else {
@@ -240,7 +243,9 @@ public class Benchmark implements ProtocolHandler {
         long elapsed = System.currentTimeMillis() - before;
         double nodesPerSecond = (double) sum / (elapsed / 1000.0d);
 
-        System.out.printf("\n==========================\n");
+        System.out.printf("\n=================\n");
+        System.out.printf("%16s: MC=%s, NM=%s, LMR=%s\n", "Settings",
+                (Search.DO_MULTI_CUT ? "on" : "off"), (Search.DO_NULL_MOVES ? "on" : "off"), (Search.DO_LMR ? "on" : "off"));
         for (String s : additionalInfo) {
             System.out.println(s);
         }

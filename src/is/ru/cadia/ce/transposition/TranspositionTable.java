@@ -13,13 +13,9 @@ public class TranspositionTable implements Constants {
 
     public class HashEntry {
         public long key;
-
-        // TODO: FIX THE SIZE.
-
         public int type;
         public int depth;
         public int eval;
-
         public int move;
 
         HashEntry(long key, int type, int depth, int eval, int move) {
@@ -51,7 +47,6 @@ public class TranspositionTable implements Constants {
     }
 
     public HashEntry get(long key) {
-
         int hashKey = (int) (key % size);
         HashEntry entry = table[hashKey];
 
@@ -63,12 +58,11 @@ public class TranspositionTable implements Constants {
     }
 
     public void put(long key, int type, int depth, int eval, int move) {
-
         int hashKey = (int) (key % size);
 
         HashEntry entry = table[hashKey];
 
-        if (entry == null) { // TODO: do we need to do all of this?
+        if (entry == null) {
             table[hashKey] = new HashEntry(key, type, depth, eval, move);
         } else if (entry.depth <= depth) {
             table[hashKey] = new HashEntry(key, type, depth, eval, move);

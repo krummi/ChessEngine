@@ -1,0 +1,11 @@
+Test suite  #       Time (s)
+WAC         300     10
+LCT2        35      180
+PET         50      60
+Quick       24      60
+Swiss Test  64      60
+GMG3        63      60
+Arasan      141     60
+ECM-GCP     183     10
+MES 400     400     15
+CSS WM-Test 100     20 min

@@ -1,9 +1,30 @@
-
-Ziggy - v0.6
--------------
+###
+### Ziggy - v0.6
+###
 
 Description:
+============
 
 Yet another chess engine. Created with a *little* help and inspiration from other chess engines
-such as CPW, Mediocre, TSCP, Glaurung, Stockfish, Fruit(!), and inspirations and guides from people
+such as CPW, Mediocre, TSCP, Glaurung, Stockfish, Fruit, and inspirations and guides from people
 like Fritz Reul (Loop) and Ed Schröder (Rebel).
+
+Usage instructions:
+===================
+
+UCI mode:
+    java -jar ziggy.jar
+
+Benchmark mode:
+    java -jar ziggy.jar <bench> <type=perft | depth | suite> <file=suite/fen file> [time=time for each position (s)] [depth=fixed depth for each position]
+
+Both:
+    Multi-Cut, Null-Moves and Late-Move Reductions are by-default enabled, but can be disabled in both modes by:
+
+    mc=off  (turns Multi-Cut off)
+    nm=off  (turns Null-Moves off)
+    lmr=off (turns Late-Move Reductions off)
+
+Examples:
+    java -jar ziggy.jar bench type=suite file=wac.txt time=10    <- Will run the test-suite Win At Chess, with a time constraints ("umhugsunartími?") of 10 seconds per position.
+    java -jar ziggy.jar bench type=suite file=wac.txt depth=7    <- Same, but with a fixed depth of 7 instead of time constraints.
