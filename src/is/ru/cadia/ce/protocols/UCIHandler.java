@@ -26,7 +26,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
 
     // Moves to go (used for allocation of time)
     private final static int DEFAULT_MOVES_TO_GO = 28;
-    private final static int DELAY_CONSTANT = 500; // ms.
+    private final static double ALLOCATION_PERCENTAGE = 0.0333;
 
     // Search strategy
     private final Search search;
@@ -45,7 +45,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
     private int timeControls;
     private int fixedDepth;
     private int fixedNoOfNodes;
-    private int movesToGo = DEFAULT_MOVES_TO_GO;
+    private int movesToGo;
     private int moveTime;
     private int[] timeLeft = new int[NO_OF_COLORS];
     private int[] inc = new int[NO_OF_COLORS];
@@ -67,14 +67,15 @@ public class UCIHandler implements ProtocolHandler, Constants {
                 openingBook = Book.getInstance();
                 openingBook.parseBook(bookFile);
             } catch (IOException ioex) {
-                System.out.println("Could not open the opening book!");
-                assert false;
-                Thread.dumpStack();
+                System.out.println("Error: Could not open the opening book.");
+                ioex.printStackTrace(System.out);
             }
         }
     }
 
     private void parseTimeControls(String key, int value) {
+
+        // Java seriously needs to support Strings in switch statements (Java 1.7!)
 
         if (key.equals("movetime")) {
 
@@ -122,7 +123,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
             inc[BLACK] = value;
 
         } else {
-            assert false : "No time control by the name " + key;
+            assert false : "No time control goes by the name " + key;
         }
 
     }
@@ -132,19 +133,37 @@ public class UCIHandler implements ProtocolHandler, Constants {
         int time = 0;
 
         if ((timeControls & TC_MOVETIME) != 0) {
+
+            // 	UCI 'movetime': Search exactly x milliseconds.
             time = moveTime;
+
         } else if ((timeControls & TC_INFINITE) != 0) {
+
+            // UCI 'infinite': Search until the "stop" command. Do not exit the search without being told so in this mode!
             time = Integer.MAX_VALUE; // c.a. 24 days
+
         } else if ((timeControls & TC_TIMELEFT) != 0) {
-            time += timeLeft[sideToMove] / (movesToGo + 2); // HACK.  
-        } else if ((timeControls & TC_INC) != 0 ) {
-            time += inc[sideToMove];
+
+            // Side-to-move has x milliseconds left on the clock.
+            // Allocates a total of ALLOCATION_PERCENTAGE of the time that we have left on the clock for this move.
+            // I'm guessing there are better ways to handle the time management, but ...
+            time = (int) (timeLeft[sideToMove] * ALLOCATION_PERCENTAGE);
+
         }
 
-        time -= DELAY_CONSTANT;
+        if ((timeControls & TC_INC) != 0) {
 
-        System.out.printf("TimeLeft: %d. MovesToGo: %d. Allocated time: %d\n",
-                timeLeft[sideToMove], movesToGo, time);
+            // Side-to-move increment per move in milliseconds
+            time += inc[sideToMove];
+
+        }
+
+        if (time > timeLeft[sideToMove]) {
+            // Can't imagine this happens often, but just in case.
+            time = (int) (timeLeft[sideToMove] * 0.5);
+        }
+
+        System.out.printf("Time left: %d. Allocated time: %d\n", timeLeft[sideToMove], time);
 
         return time;
     }
@@ -152,26 +171,27 @@ public class UCIHandler implements ProtocolHandler, Constants {
     public void handle(String message) {
 
         String[] tokens = message.split(" ");
+        String command = tokens[0];
 
-        if (tokens[0].equals("uci")) {
+        if (command.equals("uci")) {
 
             System.out.printf("id name %s %s\n", Application.NAME, Application.VERSION);
             System.out.printf("id author %s\n", Application.AUTHOR);
             System.out.println("uciok");
 
-        } else if (tokens[0].equals("isready")) {
+        } else if (command.equals("isready")) {
 
             System.out.println("readyok");
 
-        } else if (tokens[0].equals("quit")) {
+        } else if (command.equals("quit")) {
 
             System.exit(0);
 
-        } else if (tokens[0].equals("ucinewgame")) {
+        } else if (command.equals("ucinewgame")) {
 
             // TODO: this.
 
-        } else if (tokens[0].equals("position")) {
+        } else if (command.equals("position")) {
 
             // Parse FEN/startpos:
             int movePosition = -1;
@@ -216,10 +236,10 @@ public class UCIHandler implements ProtocolHandler, Constants {
                 }
             }
 
-        } else if (tokens[0].equals("go")) {
+        } else if (command.equals("go")) {
 
             // Parse the time controls for this move
-            for (int a = 1; a < tokens.length; a+=2) {
+            for (int a = 1; a < tokens.length; a += 2) {
 
                 fixedDepth = 0;
                 fixedNoOfNodes = 0;
@@ -247,6 +267,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
                 }
             }
 
+            // We don't have a book move available - go search!
             if (bestMove == Move.MOVE_NONE) {
                 bestMove = search.think(board, fixedDepth, fixedNoOfNodes);
             }

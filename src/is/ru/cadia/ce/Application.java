@@ -3,6 +3,7 @@ package is.ru.cadia.ce;
 import is.ru.cadia.ce.board.Board;
 import is.ru.cadia.ce.board.Evaluation;
 import is.ru.cadia.ce.other.Constants;
+import is.ru.cadia.ce.other.Options;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
 import is.ru.cadia.ce.protocols.UCIHandler;
 import is.ru.cadia.ce.test.FENs;
@@ -178,20 +179,16 @@ public class Application implements Constants, FENs {
 
         Application app = new Application();
 
+        // Parses the parameters for this application
         HashMap<String, String> params = app.parseParams(args);
 
-        // TODO: Put this elsewhere?
-
-        Search.DO_MULTI_CUT = true;
-        Search.DO_LMR = true;
-        Search.DO_NULL_MOVES = true;
-
-        if (params.containsKey("mc")  && params.get("mc").equals("off"))  Search.DO_MULTI_CUT = false;
-        if (params.containsKey("lmr") && params.get("lmr").equals("off")) Search.DO_LMR = false;
-        if (params.containsKey("nm")  && params.get("nm").equals("off"))  Search.DO_NULL_MOVES = false;
+        // Configures the options according to the parameters
+        Options.getInstance().parseOptions(params);
 
         if (params.containsKey("bench")) {
+
             Benchmark bench = new Benchmark(params);
+
         } else {
 
             try {
@@ -202,7 +199,6 @@ public class Application implements Constants, FENs {
             }
 
         }
-
     }
 
 }

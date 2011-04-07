@@ -45,8 +45,6 @@ public class Testing implements Constants {
 
     private Testing() {
 
-        // TODO: Beginning of AbstractSearch
-
         // Initializes the instance
         generator = MoveGenerator.getInstance();
         moveStack = new MoveStack(4800);
@@ -58,7 +56,6 @@ public class Testing implements Constants {
             selectors[a] = new MoveSelector();
         }
 
-        // TODO: End of AbstractSearch
     }
 
     public static Testing getInstance() {
@@ -157,29 +154,6 @@ public class Testing implements Constants {
             board.make(move);
             nodes += perft(board, depth - 1, ply + 1);
             board.retract(move);
-        }
-
-        return nodes;
-    }
-
-    public long perft2(Board board, int depth) {
-
-        if (depth == 0) {
-            return 1;
-        }
-
-        long nodes = 0;
-        boolean isCheck = board.isCheck();
-        int noOfMoves = generator.generatePseudoMoves(board, moveStack, isCheck);
-
-        for (int i = 0; i < noOfMoves; i++) {
-            int move = moveStack.pop().move;
-
-            if (board.isValidMove(move, isCheck)) {
-                board.make(move);
-                nodes += perft2(board, depth - 1);
-                board.retract(move);
-            }
         }
 
         return nodes;

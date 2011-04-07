@@ -9,3 +9,14 @@ Arasan      141     60
 ECM-GCP     183     10
 MES 400     400     15
 CSS WM-Test 100     20 min
+
+
+
+#java -jar ziggy.jar bench type=suite time=10 file=gmg.txt lmr=off nm=off mc=off > output/3-ecm-none.txt
+#java -jar ziggy.jar bench type=suite time=10 file=wac.txt lmr=off nm=off mc=off > output/3-wac-none.txt
+
+java -jar ziggy.jar bench type=suite time=60 file=pet.txt lmr=off nm=off mc=off > output/3-pet-none.txt
+java -jar ziggy.jar bench type=suite time=60 file=quick.txt lmr=off nm=off mc=off > output/3-quick-none.txt
+java -jar ziggy.jar bench type=suite time=60 file=swisstext.txt lmr=off nm=off mc=off > output/3-swiss-none.txt
+java -jar ziggy.jar bench type=suite time=60 file=gmg.txt lmr=off nm=off mc=off > output/3-gmg-none.txt
+java -jar ziggy.jar bench type=suite time=60 file=arasan.txt lmr=off nm=off mc=off > output/3-arasan-none.txt

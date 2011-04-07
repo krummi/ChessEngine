@@ -22,6 +22,7 @@ public class Benchmark implements ProtocolHandler {
 
     // Variables
 
+    private Search search;
     private ArrayList<String> positions = new ArrayList<String>();
     private int seconds;
 
@@ -29,7 +30,7 @@ public class Benchmark implements ProtocolHandler {
 
     public Benchmark(HashMap<String, String> options) {
 
-        assert options.get(PARAM_FEN) != null : "No fen file specified."; // TODO: default file?
+        assert options.get(PARAM_FEN) != null : "No fen file specified.";
         assert options.get(PARAM_TYPE) != null : "No type specified.";
         assert options.get(PARAM_TYPE).equals("depth")
                 || options.get(PARAM_TYPE).equals("perft")
@@ -70,6 +71,8 @@ public class Benchmark implements ProtocolHandler {
             ioex.printStackTrace(System.err);
         }
 
+        search = new Search(this);
+
         if (type.equals("depth")) {
             depthTesting(param);
         } else if (type.equals("perft")) {
@@ -106,7 +109,6 @@ public class Benchmark implements ProtocolHandler {
     }
 
     private void depthTesting(int depth) {
-        Search search = new Search(null);
 
         long sum = 0, qsum = 0;
         long before = System.currentTimeMillis();
@@ -131,8 +133,6 @@ public class Benchmark implements ProtocolHandler {
     }
 
     public void suiteTesting(int depth) {
-
-        Search search = new Search(this);
 
         int solved = 0;
         long sum = 0, qsum = 0;
@@ -244,8 +244,7 @@ public class Benchmark implements ProtocolHandler {
         double nodesPerSecond = (double) sum / (elapsed / 1000.0d);
 
         System.out.printf("\n=================\n");
-        System.out.printf("%16s: MC=%s, NM=%s, LMR=%s\n", "Settings",
-                (Search.DO_MULTI_CUT ? "on" : "off"), (Search.DO_NULL_MOVES ? "on" : "off"), (Search.DO_LMR ? "on" : "off"));
+        System.out.println(search.getConfiguration());
         for (String s : additionalInfo) {
             System.out.println(s);
         }

@@ -14,7 +14,7 @@ public class Zobrist implements Constants {
 
     private static final Random random = new Random(32L);
 
-    public static final long[][][] PIECES = new long[NO_OF_PIECES][NO_OF_COLORS][Board.NO_OF_SQUARES]; // TODO: FIX!
+    public static final long[][][] PIECES = new long[NO_OF_PIECES][NO_OF_COLORS][Board.NO_OF_SQUARES];
     public static final long[] EP = new long[Board.NO_OF_SQUARES];
     public static final long[] CASTLING = new long[16];
     public static final long SIDE_TO_MOVE;

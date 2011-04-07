@@ -3,55 +3,65 @@ package is.ru.cadia.ce;
 import is.ru.cadia.ce.board.Board;
 import is.ru.cadia.ce.board.Evaluation;
 import is.ru.cadia.ce.other.Constants;
+import is.ru.cadia.ce.other.Options;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
 import is.ru.cadia.ce.transposition.TranspositionTable;
 
 public class Search implements Constants {
 
+    // Search configuration
+
+    // Multi-Cut
+    private static boolean DO_MULTI_CUT = true;
+    private static int MC_EXPAND = 10;
+    private static int MC_REDUCTION = 2;
+    private static int MC_CUTOFFS = 3;
+
+    // Null Move
+    private static boolean DO_NULL_MOVES = true;
+    private static int NM_REDUCTION = 2;
+
+    // Late-Move Reductions
+    private static boolean DO_LMR = true;
+    private static int LMR_FULL_DEPTH_MOVES = 4;
+
+    // Aspiration window
+    private static int ASPIRATION_SIZE = 80;
+
     // Constants
-
-    public static boolean DO_MULTI_CUT = true;
-    private static final int MC_EXPAND = 10;
-    private static final int MC_REDUCTION = 2;
-    private static final int MC_CUTOFFS = 3;
-
-    public static boolean DO_NULL_MOVES = true;
-    private static final int NULL_MOVE_REDUCTION = 2;
-
-    public static boolean DO_LMR = true;
-    private static final int LMR_FULL_DEPTH_MOVES = 4;
 
     public static final int HASH_ALPHA = 0;
     public static final int HASH_BETA = 1;
     public static final int HASH_EXACT = 2;
 
-    private static final int ASPIRATION_SIZE = 80;
-    private static final int TIME_CHECK_INTERVAL = 500;
+    // Time management
+    private static final int TIME_CHECK_INTERVAL = 1000;
 
     // Variables
 
+    // Necessary data structures
     public TranspositionTable transTable;   // A instance of a transposition table.
     private MoveSelector[] selectors;       // The selectors used for each ply.
     private ProtocolHandler handler;        // The ProtocolHandler-object associated
 
-    // TODO: Fix these:
-
-    private boolean useFixedDepth = false;
-    private int timeForThisMove;
-
-    private int pollForStopInterval = TIME_CHECK_INTERVAL;
-    private boolean shouldWeStop = false;
+    // Time management
+    private int timeForThisMove, pollForStopInterval = TIME_CHECK_INTERVAL;
+    private boolean useFixedDepth = false, shouldWeStop = false;
     private long timeStarted;
+
+    // Search information
     public long nodesSearched, qsearched;
 
     // Functions
 
     public Search(ProtocolHandler handler) {
-
-        // TODO: Beginning of AbstractSearch
-
-        // Sets the ProtocolHandler
         this.handler = handler;
+
+        // Initialize
+        initialize();
+    }
+
+    private void initialize() {
 
         // Initializes the PlyInfo instances that will be used.
         selectors = new MoveSelector[MAX_PLY];
@@ -64,8 +74,22 @@ public class Search implements Constants {
         transTable = new TranspositionTable();
         transTable.initialize();
 
-        // TODO: End of AbstractSearch
+        // Initializes the configuration
 
+        Options options = Options.getInstance();
+
+        DO_MULTI_CUT = options.getOptionBoolean("Do MultiCut");
+        MC_CUTOFFS = options.getOptionInt("MC Cutoffs");
+        MC_EXPAND = options.getOptionInt("MC Expand");
+        MC_REDUCTION = options.getOptionInt("MC Reduction");
+
+        DO_NULL_MOVES = options.getOptionBoolean("Do NullMove");
+        NM_REDUCTION = options.getOptionInt("NM Reduction");
+
+        DO_LMR = options.getOptionBoolean("Do LMR");
+        LMR_FULL_DEPTH_MOVES = options.getOptionInt("LMR FullDepthMoves");
+
+        ASPIRATION_SIZE = options.getOptionInt("Aspiration Size");
     }
 
     // Couldn't resist to steal the "think" name from Glaurung
@@ -288,7 +312,7 @@ public class Search implements Constants {
             int epSquare = board.epSquare;
 
             board.makeNullMove();
-            eval = -alphaBeta(board, depth - NULL_MOVE_REDUCTION, ply + 1, -beta, -beta + 1, false);
+            eval = -alphaBeta(board, depth - NM_REDUCTION, ply + 1, -beta, -beta + 1, false);
             board.retractNullMove(epSquare);
 
             if (eval >= beta) {
@@ -465,6 +489,20 @@ public class Search implements Constants {
         }
 
         return alpha;
+    }
+
+    public String getConfiguration() {
+        return String.format("%16s: MC=%s (c: %d, e: %d, r: %d), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d", "Settings",
+                (DO_MULTI_CUT ? "on" : "off"),
+                MC_CUTOFFS,
+                MC_EXPAND,
+                MC_REDUCTION,
+                (DO_NULL_MOVES ? "on" : "off"),
+                NM_REDUCTION,
+                (DO_LMR ? "on" : "off"),
+                LMR_FULL_DEPTH_MOVES,
+                ASPIRATION_SIZE
+        );
     }
 
 }
