@@ -33,7 +33,7 @@
     </target>
 
     <!-- Create a jar file -->
-    <target name="jar" depends="build">
+    <target name="jar" depends="clean, build">
         <mkdir dir="${out}/jar"/>
         <copy todir="${out}/jar" file="openings.txt" />
         <jar destfile="${out}/jar/ziggy.jar" basedir="${out}/classes">

@@ -249,15 +249,14 @@ public class Search implements Constants {
 
         nodesSearched++; // Increment the nodes searched
 
-        // TODO: Repetition detection!
-
         boolean mcAllowed = false;
 
         // Transposition table lookup
+
         TranspositionTable.HashEntry entry = transTable.get(board.key);
 
         if (entry != null) {
-            transFound ++;
+            transFound++;
             if (entry.depth >= depth) {
                 if (entry.type == HASH_EXACT) {
                     return entry.eval;
@@ -267,14 +266,15 @@ public class Search implements Constants {
                     return entry.eval; // TODO: change to return beta?
                 }
             } else {
-                transLessDepth++;
-                mcAllowed = true;
+                /*transLessDepth++;
                 if (entry.type == HASH_EXACT) {
                     transExact++;
                 } else if (entry.type == HASH_ALPHA && entry.eval <= alpha) {
                     transAlpha++;
-                } else if (entry.type == HASH_BETA && entry.eval >= beta) {
-                    transBeta++;
+                } else*/
+                if (entry.type == HASH_BETA && entry.eval >= beta) {
+                    //    transBeta++;
+                    mcAllowed = true;
                 }
             }
         } else {
@@ -284,21 +284,23 @@ public class Search implements Constants {
         int eval;
 
         // Horizon?
+
         if (depth <= 0) {
             eval = qsearch(board, ply, alpha, beta);
-            //eval = Evaluation.evaluate(board, false);            
             transTable.putLeaf(board.key, eval, alpha, beta);
             return eval;
         }
 
-        // Move generation (TODO: move sorting)
+        // Move generation
 
         int move;
         boolean isCheck = board.isCheck();
         MoveSelector selector = selectors[ply];
         selector.initialize(board, (entry == null ? Move.MOVE_NONE : entry.move), isCheck, false);
 
-        // Checks for mate or stalemate
+        // Checks for draw, mate or stalemate
+
+        // TODO: Repetition detection!
 
         if ((move = selector.getNextMove()) == Move.MOVE_NONE) {
             return isCheck ? (-Value.MATE + ply) : Value.DRAW;
@@ -340,36 +342,31 @@ public class Search implements Constants {
 
             int c = 0;
             //int[] cuts = new int[NO_OF_PIECES + 1];
+            //ArrayList<Integer> cuts = new ArrayList<Integer>();
 
             while (true) {
+
+                //int piece = Move.getFrom(move);
+
+                //if (!cuts.contains(piece)) {
 
                 board.make(move);
                 eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true);
                 board.retract(move);
 
                 if (eval >= beta) {
+
+                    //        cuts.add(piece);
                     c++;
 
-                    //cuts[Square.getPiece(board.squares[Move.getFrom(move)])] ++;
+                    //cuts[Square.getPiece(board.squares[Move.getFrom(move)])]++;
 
                     if (c == MC_CUTOFFS) {
-
                         mcprunes++;
-
-                        /*int max = 0;
-                        for (int i : cuts) {
-                            max = Math.max(max, i);
-                        }
-
-                        assert max >= 1 && max <= Search.MC_CUTOFFS;
-
-                        if (max == 1) one++;
-                        if (max == 2) two++;
-                        if (max == 3) three++;*/
-
                         return beta;
                     }
                 }
+                //}
 
                 queueIndex++;
                 if (queueIndex == MC_EXPAND) break;
