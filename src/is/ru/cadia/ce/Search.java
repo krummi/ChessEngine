@@ -7,6 +7,8 @@ import is.ru.cadia.ce.other.Options;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
 import is.ru.cadia.ce.transposition.TranspositionTable;
 
+import java.util.ArrayList;
+
 public class Search implements Constants {
 
     // Search configuration
@@ -342,31 +344,31 @@ public class Search implements Constants {
 
             int c = 0;
             //int[] cuts = new int[NO_OF_PIECES + 1];
-            //ArrayList<Integer> cuts = new ArrayList<Integer>();
+            ArrayList<Integer> cuts = new ArrayList<Integer>(MC_CUTOFFS);
 
             while (true) {
 
-                //int piece = Move.getFrom(move);
+                int piece = Move.getFrom(move);
 
-                //if (!cuts.contains(piece)) {
+                if (!cuts.contains(piece)) {
 
-                board.make(move);
-                eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true);
-                board.retract(move);
+                    board.make(move);
+                    eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true);
+                    board.retract(move);
 
-                if (eval >= beta) {
+                    if (eval >= beta) {
 
-                    //        cuts.add(piece);
-                    c++;
+                        cuts.add(piece);
+                        c++;
 
-                    //cuts[Square.getPiece(board.squares[Move.getFrom(move)])]++;
+                        //cuts[Square.getPiece(board.squares[Move.getFrom(move)])]++;
 
-                    if (c == MC_CUTOFFS) {
-                        mcprunes++;
-                        return beta;
+                        if (c == MC_CUTOFFS) {
+                            mcprunes++;
+                            return beta;
+                        }
                     }
                 }
-                //}
 
                 queueIndex++;
                 if (queueIndex == MC_EXPAND) break;
