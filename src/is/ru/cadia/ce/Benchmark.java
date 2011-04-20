@@ -7,9 +7,10 @@ import is.ru.cadia.ce.test.Testing;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Benchmark implements ProtocolHandler {
 
@@ -19,6 +20,8 @@ public class Benchmark implements ProtocolHandler {
     private static final String PARAM_TYPE = "type";
     private static final String PARAM_DEPTH = "depth";
     private static final String PARAM_TIME = "time";
+
+    private static final Pattern SUITE_PATTERN = Pattern.compile("^(.*?) (?:am ([^;]*);)? ?(?:bm ([^;]*);)? .*$");
 
     // Variables
 
@@ -48,7 +51,7 @@ public class Benchmark implements ProtocolHandler {
 
         } else if (type.equals("suite")) {
 
-            fileName = "suites/" + fileName;
+            fileName = "suites/" + fileName; // Suites need to be under the folder "suites"
 
             assert options.get(PARAM_DEPTH) != null || options.get(PARAM_TIME) != null;
 
@@ -141,55 +144,30 @@ public class Benchmark implements ProtocolHandler {
         for (int i = 0; i < positions.size(); i++) {
 
             String line = positions.get(i);
-
             System.out.printf("\nPosition %d/%d: %s\n\n", (i + 1), positions.size(), line);
 
-            String[] tokens = line.split(" ");
-            int indexOfBM = -1, indexOfAM = -1;
-            for (int a = 0; a < tokens.length; a++) {
-                String s = tokens[a];
-                if (s.equals("bm")) {
-                    indexOfBM = a;
-                } else if (s.equals("am")) {
-                    indexOfAM = a;
-                }
-            }
-            if (indexOfBM == -1 && indexOfAM == -1) {
-                System.out.printf("Line %d does not contain a 'bm' section.\n", (i + 1));
-                break;
-            }
+            // A little bit of regular expression magic.
 
-            ArrayList<String> avoidMoves = new ArrayList<String>();
+            Matcher matcher = SUITE_PATTERN.matcher(line);
+            if (!matcher.find()) assert false : "Bad suite description: " + line;
+
+            String fenStr = matcher.group(1);
+            String amStr = matcher.group(2);
+            String bmStr = matcher.group(3);
+
             ArrayList<String> bestMoves = new ArrayList<String>();
+            ArrayList<String> avoidMoves = new ArrayList<String>();
 
-            if (indexOfBM > -1) {
-
-                for (int a = indexOfBM + 1; ; a++) {
-                    String move = tokens[a];
-                    if (move.endsWith(";")) {
-                        bestMoves.add(move.substring(0, move.length() - 1));
-                        break;
-                    }
-                    bestMoves.add(move);
-                }
-
+            if (amStr != null) {
+                for (String s : amStr.split(" ")) avoidMoves.add(s);
             }
 
-            // TODO: Horrendous code duplication.
-
-            if (indexOfAM > -1) {
-                for (int a = indexOfAM + 1; ; a++) {
-                    String move = tokens[a];
-                    if (move.endsWith(";")) {
-                        avoidMoves.add(move.substring(0, move.length() - 1));
-                        break;
-                    }
-                    bestMoves.add(move);
-                }
+            if (bmStr != null) {
+                for (String s : bmStr.split(" ")) bestMoves.add(s);
             }
 
             Board board = new Board();
-            board.initialize(line);
+            board.initialize(fenStr);
 
             int bestMove = search.think(board, depth, 0);
 

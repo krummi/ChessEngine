@@ -118,7 +118,7 @@ public class Board implements Constants {
 
     // The FEN regular expression pattern
     private static final Pattern FEN_PATTERN = Pattern.compile(
-            "^([a-zA-Z1-8/]*) ([w|b]) (-|[KQkq]{1,4}) (-|[a-h][3|6]) ?(\\d+)? ?(?:\\d+)?$");
+            "^([a-zA-Z1-8/]*) ([w|b]) (-|[KQkq]{1,4}) (-|[a-h][3|6]) ?(\\d+)? ?(?:\\d+)?.*$");
 
     // Declares the initial board state according to a FEN
     private static final String INITIAL_FEN =
