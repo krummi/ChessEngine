@@ -39,6 +39,7 @@ public class Options {
                 new Option("MC Cutoffs", 3),
                 new Option("MC Expand", 10),
                 new Option("MC Reduction", 2),
+                new Option("MC Piece", false),
 
                 new Option("Do NullMove", true),
                 new Option("NM Reduction", 2),
@@ -72,6 +73,9 @@ public class Options {
         }
         if (params.containsKey("mc_reduction")) {
             options.setOption("MC Reduction", params.get("mc_reduction"));
+        }
+        if (params.containsKey("mc_piece")) {
+            options.setOption("MC Piece", params.get("mc_piece").equals("on"));
         }
 
         // Null moves

@@ -18,6 +18,7 @@ public class Search implements Constants {
     private static int MC_EXPAND = 10;
     private static int MC_REDUCTION = 2;
     private static int MC_CUTOFFS = 3;
+    private static boolean MC_PIECE_CHECK = false;
 
     // Null Move
     private static boolean DO_NULL_MOVES = true;
@@ -84,6 +85,7 @@ public class Search implements Constants {
         MC_CUTOFFS = options.getOptionInt("MC Cutoffs");
         MC_EXPAND = options.getOptionInt("MC Expand");
         MC_REDUCTION = options.getOptionInt("MC Reduction");
+        MC_PIECE_CHECK = options.getOptionBoolean("MC Piece");
 
         DO_NULL_MOVES = options.getOptionBoolean("Do NullMove");
         NM_REDUCTION = options.getOptionInt("NM Reduction");
@@ -295,7 +297,7 @@ public class Search implements Constants {
 
         // Repetition detection
 
-        if (board.isDraw()) return Value.DRAW;
+        if (board.isDraw()) return Value.DRAW; // TODO: Contempt factor.
 
         // Move generation
 
@@ -345,14 +347,14 @@ public class Search implements Constants {
             after++;
 
             int c = 0;
-            //int[] cuts = new int[NO_OF_PIECES + 1];
             ArrayList<Integer> cuts = new ArrayList<Integer>(MC_CUTOFFS);
 
             while (true) {
 
                 int piece = Move.getFrom(move);
 
-                if (!cuts.contains(piece)) {
+                // Distinguish between MC_PIECE_CHECK on and off;
+                if ((MC_PIECE_CHECK && !cuts.contains(piece)) || !MC_PIECE_CHECK) {
 
                     board.make(move);
                     eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true);
@@ -360,16 +362,15 @@ public class Search implements Constants {
 
                     if (eval >= beta) {
 
-                        cuts.add(piece);
+                        if (MC_PIECE_CHECK) cuts.add(piece);
                         c++;
-
-                        //cuts[Square.getPiece(board.squares[Move.getFrom(move)])]++;
 
                         if (c == MC_CUTOFFS) {
                             mcprunes++;
                             return beta;
                         }
                     }
+
                 }
 
                 queueIndex++;
@@ -493,11 +494,12 @@ public class Search implements Constants {
     }
 
     public String getConfiguration() {
-        return String.format("%16s: MC=%s (c: %d, e: %d, r: %d), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d", "Settings",
+        return String.format("%16s: MC=%s (c: %d, e: %d, r: %d, piece: %s), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d", "Settings",
                 (DO_MULTI_CUT ? "on" : "off"),
                 MC_CUTOFFS,
                 MC_EXPAND,
                 MC_REDUCTION,
+                (MC_PIECE_CHECK ? "on" : "off"),
                 (DO_NULL_MOVES ? "on" : "off"),
                 NM_REDUCTION,
                 (DO_LMR ? "on" : "off"),
