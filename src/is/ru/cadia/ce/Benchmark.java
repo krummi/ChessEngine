@@ -68,7 +68,7 @@ public class Benchmark implements ProtocolHandler {
                 positions.add(line);
             }
         } catch (IOException ioex) {
-            ioex.printStackTrace(System.err);
+            ioex.printStackTrace(System.out);
         }
 
         search = new Search(this);
@@ -155,7 +155,7 @@ public class Benchmark implements ProtocolHandler {
                 }
             }
             if (indexOfBM == -1 && indexOfAM == -1) {
-                System.err.printf("Line %d does not contain a 'bm' section.\n", (i + 1));
+                System.out.printf("Line %d does not contain a 'bm' section.\n", (i + 1));
                 break;
             }
 

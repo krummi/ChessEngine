@@ -293,6 +293,10 @@ public class Search implements Constants {
             return eval;
         }
 
+        // Repetition detection
+
+        if (board.isDraw()) return Value.DRAW;
+
         // Move generation
 
         int move;
@@ -300,9 +304,7 @@ public class Search implements Constants {
         MoveSelector selector = selectors[ply];
         selector.initialize(board, (entry == null ? Move.MOVE_NONE : entry.move), isCheck, false);
 
-        // Checks for draw, mate or stalemate
-
-        // TODO: Repetition detection!
+        // Checks for mate or stalemate
 
         if ((move = selector.getNextMove()) == Move.MOVE_NONE) {
             return isCheck ? (-Value.MATE + ply) : Value.DRAW;

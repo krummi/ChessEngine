@@ -14,6 +14,8 @@ public class UndoInfo {
     public int capturedPiece;
     public int capturedSquare;
 
+    public int gamePly;
+
     // Functions
 
     public UndoInfo() {}

@@ -1,11 +1,11 @@
 package is.ru.cadia.ce.board;
 
-import is.ru.cadia.ce.Move;
-import is.ru.cadia.ce.SquareTables;
-import is.ru.cadia.ce.UndoInfo;
-import is.ru.cadia.ce.Value;
+import is.ru.cadia.ce.*;
 import is.ru.cadia.ce.other.Constants;
 import is.ru.cadia.ce.transposition.Zobrist;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Board implements Constants {
 
@@ -116,10 +116,13 @@ public class Board implements Constants {
     private static final int BLACK_CASTLE_SHORT = 4; // Kingside (FEN: k)
     private static final int BLACK_CASTLE_LONG = 8; // Queenside (FEN: q)
 
-    // Declares the initial board state according to a FEN
-    private static final String initialFEN =
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    // The FEN regular expression pattern
+    private static final Pattern FEN_PATTERN = Pattern.compile(
+            "^([a-zA-Z1-8/]*) ([w|b]) (-|[KQkq]{1,4}) (-|[a-h][3|6]) ?(\\d+)? ?(?:\\d+)?$");
 
+    // Declares the initial board state according to a FEN
+    private static final String INITIAL_FEN =
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     // Variables
     public int[] squares;           // 15x8 board representation
@@ -127,12 +130,16 @@ public class Board implements Constants {
     public int sideToMove;          // Who's turn is it?
     public int castle;              // Castling availability (bits)
     public int epSquare;            // Is there some EP-flagged square?
+    public int gamePly;             // Half-move clock
+    public long key;                // The hash of this board state
 
-    public long key;                // The hash of this board state.
+    // Zobrist key history
+    private long[] keyHistory = new long[5000];
+    private int keyHistoryPtr = 0;
 
     // History stack
     private UndoInfo[] history;
-    private int historySize = 0;
+    private int historyPtr = 0;
 
     // Piece-lists
     public PieceList pawns = new PieceList(8);
@@ -147,7 +154,7 @@ public class Board implements Constants {
     // Instance functions
 
     public void initialize() {
-        initialize(initialFEN);
+        initialize(INITIAL_FEN);
     }
 
     public void initialize(String fen) {
@@ -183,18 +190,26 @@ public class Board implements Constants {
     public void make(int move) {
 
         // Initialize the UndoInfo instance we are going to use.
-        UndoInfo undoInfo = history[historySize++];
+        UndoInfo undoInfo = history[historyPtr++];
 
         undoInfo.epSquare = epSquare;
         undoInfo.castle = castle;
         undoInfo.key = key;
         undoInfo.capture = false;
+        undoInfo.gamePly = gamePly;
 
         // Get values for this move.
         int type = Move.getType(move);
         int from = Move.getFrom(move);
         int to = Move.getTo(move);
         int piece = Square.getPiece(squares[from]);
+
+        // Updates the half-move clock.
+        gamePly++;
+        if (piece == PAWN) gamePly = 0;
+
+        // Updates the key history stack.
+        keyHistory[keyHistoryPtr++] = key;
 
         // Clears the "from" square.
         clearSquare(from, true);
@@ -205,6 +220,8 @@ public class Board implements Constants {
             undoInfo.capturedPiece = Square.getPiece(squares[to]);
             undoInfo.capturedSquare = to;
             clearSquare(to, true);
+
+            gamePly = 0; // Reset the half-move clock.
         }
 
         // It's a EP capture:
@@ -213,6 +230,8 @@ public class Board implements Constants {
             undoInfo.capturedPiece = PAWN;
             undoInfo.capturedSquare = epSquare + (sideToMove == WHITE ? S : N);
             clearSquare(undoInfo.capturedSquare, true);
+
+            gamePly = 0; // Reset the half-move clock.
         }
 
         // Promotion:
@@ -292,7 +311,10 @@ public class Board implements Constants {
         sideToMove = oppColor(sideToMove);
 
         // Retrieve all of the stuff from history:
-        UndoInfo undoInfo = history[--historySize];
+        UndoInfo undoInfo = history[--historyPtr];
+
+        // Updates the key history stack pointer.
+        keyHistoryPtr --;
 
         // Reverse the promotion.
         if (Move.isPromotion(type)) {
@@ -336,9 +358,13 @@ public class Board implements Constants {
         epSquare = undoInfo.epSquare;
         castle = undoInfo.castle;
         key = undoInfo.key;
+        gamePly = undoInfo.gamePly;
     }
 
     public void makeNullMove() {
+
+        // Updates the key history stack.
+        keyHistory[keyHistoryPtr++] = key;
 
         // Hash the EP square.
         if (epSquare != NO_EP) {
@@ -349,9 +375,15 @@ public class Board implements Constants {
         // Toggle the side to move
         sideToMove = oppColor(sideToMove);
         key ^= Zobrist.SIDE_TO_MOVE;
+
+        // Update the half-move counter
+        gamePly ++;
     }
 
     public void retractNullMove(int oldEpSquare) {
+
+        // Updates the key history stack.
+        keyHistoryPtr--;
 
         // Hash the EP square.
         if (oldEpSquare != NO_EP) {
@@ -362,6 +394,9 @@ public class Board implements Constants {
         // Toggle the side to move
         sideToMove = oppColor(sideToMove);
         key ^= Zobrist.SIDE_TO_MOVE;
+
+        // Update the half-move counter
+        gamePly --;
     }
 
     public int[] getPiecesInMVOrder(int color) {
@@ -524,6 +559,24 @@ public class Board implements Constants {
         return Increment.getPieceIncrement(attackPiece, indexKing - target) == 0;
     }
 
+    public boolean isDraw() {
+
+        // Fifty-move rule
+
+        if (gamePly >= 100) return true; // TODO: fix when gamePly == 100.
+
+        // "Threefold" repetition
+
+        for (int i = 4; i <= gamePly; i += 2) {
+            if (keyHistory[keyHistoryPtr - i] == key) {
+                //System.out.println("DRAW detected by threefold repetition.");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public boolean whiteCanCastleLong() {
         return (castle & WHITE_CASTLE_LONG) != 0;
     }
@@ -574,24 +627,24 @@ public class Board implements Constants {
 
         // Update the indicis table:
         switch (piece) {
-            case PAWN:
-                pawns.add(color, square);
-                break;
-            case KNIGHT:
-                knights.add(color, square);
-                break;
-            case KING:
-                king.add(color, square);
-                break;
-            case BISHOP:
-                bishops.add(color, square);
-                break;
-            case ROOK:
-                rooks.add(color, square);
-                break;
-            case QUEEN:
-                queens.add(color, square);
-                break;
+        case PAWN:
+            pawns.add(color, square);
+            break;
+        case KNIGHT:
+            knights.add(color, square);
+            break;
+        case KING:
+            king.add(color, square);
+            break;
+        case BISHOP:
+            bishops.add(color, square);
+            break;
+        case ROOK:
+            rooks.add(color, square);
+            break;
+        case QUEEN:
+            queens.add(color, square);
+            break;
         }
 
         // Update the square:
@@ -628,24 +681,24 @@ public class Board implements Constants {
         // Updates the indicis table:
         int index = indicis[square];
         switch (piece) {
-            case PAWN:
-                pawns.remove(color, index);
-                break;
-            case KNIGHT:
-                knights.remove(color, index);
-                break;
-            case KING:
-                king.remove(color, index);
-                break;
-            case BISHOP:
-                bishops.remove(color, index);
-                break;
-            case ROOK:
-                rooks.remove(color, index);
-                break;
-            case QUEEN:
-                queens.remove(color, index);
-                break;
+        case PAWN:
+            pawns.remove(color, index);
+            break;
+        case KNIGHT:
+            knights.remove(color, index);
+            break;
+        case KING:
+            king.remove(color, index);
+            break;
+        case BISHOP:
+            bishops.remove(color, index);
+            break;
+        case ROOK:
+            rooks.remove(color, index);
+            break;
+        case QUEEN:
+            queens.remove(color, index);
+            break;
         }
 
         // Nullify the square:
@@ -654,10 +707,18 @@ public class Board implements Constants {
 
     private void parseFEN(String fen) {
 
-        // (#1) Piece placement
-        int a = 0;
-        for (int row = 7, column = 0; ; a++) {
-            char c = fen.charAt(a);
+        // Parses the FEN components using a regular expression.
+        Matcher matcher = FEN_PATTERN.matcher(fen);
+
+        if (!matcher.find()) {
+            assert false : "Bad FEN string: " + fen;
+        }
+
+        // (1) Piece placement
+
+        int i = 0;
+        for (int row = 7, column = 0; ; i++) {
+            char c = fen.charAt(i);
 
             if (c == ' ') {
                 break;
@@ -672,65 +733,68 @@ public class Board implements Constants {
 
             int color = Character.isUpperCase(c) ? WHITE : BLACK;
             c = Character.toLowerCase(c);
-            int square = ((UPPER_BORDER_SIZE + row) * NO_OF_FILES)
-                    + (LEFT_BORDER_SIZE + column);
+            int square = ((UPPER_BORDER_SIZE + row) * NO_OF_FILES) + (LEFT_BORDER_SIZE + column);
 
             switch (c) {
-                case 'p':
-                    fillSquare(square, color, PAWN, false);
-                    break;
-                case 'n':
-                    fillSquare(square, color, KNIGHT, false);
-                    break;
-                case 'b':
-                    fillSquare(square, color, BISHOP, false);
-                    break;
-                case 'r':
-                    fillSquare(square, color, ROOK, false);
-                    break;
-                case 'q':
-                    fillSquare(square, color, QUEEN, false);
-                    break;
-                case 'k':
-                    fillSquare(square, color, KING, false);
-                    break;
+            case 'p':
+                fillSquare(square, color, PAWN, false);
+                break;
+            case 'n':
+                fillSquare(square, color, KNIGHT, false);
+                break;
+            case 'b':
+                fillSquare(square, color, BISHOP, false);
+                break;
+            case 'r':
+                fillSquare(square, color, ROOK, false);
+                break;
+            case 'q':
+                fillSquare(square, color, QUEEN, false);
+                break;
+            case 'k':
+                fillSquare(square, color, KING, false);
+                break;
             }
             column++;
         }
 
-        // (#2) Active color.
-        a++;
-        sideToMove = fen.charAt(a) == 'w' ? WHITE : BLACK;
+        // (2) Active color.
+        i++;
+        sideToMove = fen.charAt(i) == 'w' ? WHITE : BLACK;
 
-        // (#3) Castling availability.
-        for (a += 2; ; a++) {
-            char c = fen.charAt(a);
+        // (3) Castling availability.
+        for (i += 2; ; i++) {
+            char c = fen.charAt(i);
 
             if (c == ' ') {
                 break;
             }
             switch (c) {
-                case 'K':
-                    castle |= WHITE_CASTLE_SHORT;
-                    break;
-                case 'Q':
-                    castle |= WHITE_CASTLE_LONG;
-                    break;
-                case 'k':
-                    castle |= BLACK_CASTLE_SHORT;
-                    break;
-                case 'q':
-                    castle |= BLACK_CASTLE_LONG;
-                    break;
+            case 'K':
+                castle |= WHITE_CASTLE_SHORT;
+                break;
+            case 'Q':
+                castle |= WHITE_CASTLE_LONG;
+                break;
+            case 'k':
+                castle |= BLACK_CASTLE_SHORT;
+                break;
+            case 'q':
+                castle |= BLACK_CASTLE_LONG;
+                break;
             }
         }
 
-        // (#4) En passant target square in AGN.
-        if (fen.charAt(a + 1) != '-') {
-            epSquare = Square.squareNameToIndex(fen.charAt(a + 1), fen.charAt(a + 2));
+        // (4) En passant target square in AGN.
+        if (fen.charAt(i + 1) != '-') {
+            epSquare = Square.squareNameToIndex(fen.charAt(i + 1), fen.charAt(i + 2));
         } else {
             epSquare = NO_EP;
         }
+
+        // (5) Half-move clock
+        gamePly = (matcher.group(5) == null ? 0 : Integer.parseInt(matcher.group(5)));
+
     }
 
 
@@ -799,6 +863,7 @@ public class Board implements Constants {
         castleMask[A8] = ~(BLACK_CASTLE_LONG);
         castleMask[E8] = ~(BLACK_CASTLE_LONG | BLACK_CASTLE_SHORT);
         castleMask[H8] = ~(BLACK_CASTLE_SHORT);
+
     }
 
 }

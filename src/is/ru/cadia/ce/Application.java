@@ -194,8 +194,8 @@ public class Application implements Constants, FENs {
             try {
                 app.start();
             } catch (Exception ex) {
-                System.err.println("An application exception occurred.");
-                ex.printStackTrace(System.err);
+                System.out.println("An application exception occurred.");
+                ex.printStackTrace(System.out);
             }
 
         }
