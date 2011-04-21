@@ -124,7 +124,7 @@ public class Benchmark implements ProtocolHandler {
             Board board = new Board();
             board.initialize(line);
 
-            search.think(board, depth, 0);
+            search.think(board, depth);
 
             sum += search.nodesSearched;
             qsum += search.qsearched;
@@ -169,7 +169,7 @@ public class Benchmark implements ProtocolHandler {
             Board board = new Board();
             board.initialize(fenStr);
 
-            int bestMove = search.think(board, depth, 0);
+            int bestMove = search.think(board, depth);
 
             boolean positionSolved = false;
 
@@ -244,4 +244,9 @@ public class Benchmark implements ProtocolHandler {
     public int getTimeForThisMove(int sideToMove) {
         return seconds * 1000;
     }
+
+    public void sendMessage(String message) {
+        System.out.println(message);
+    }
+
 }

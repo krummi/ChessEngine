@@ -96,7 +96,7 @@ public class Search implements Constants {
     }
 
     // Couldn't resist to steal the "think" name from Glaurung
-    public int think(Board board, int depth, int nodes) {
+    public int think(Board board, int depth) {
 
         // Time management
 
@@ -150,10 +150,12 @@ public class Search implements Constants {
             double timeUsedPerSec = timeUsed / 1000d;
             int nps = (int) (timeUsedPerSec <= 1. ? nodesSearched : nodesSearched / timeUsedPerSec);
 
-            // TODO: info depth 88 score mate 2 time 17 nodes 10107 nps 594529 pv h6h7 h8h7 h5g6 
+            // TODO: info depth 88 score mate 2 time 17 nodes 10107 nps 594529 pv h6h7 h8h7 h5g6
 
-            System.out.printf("info score cp %d depth %d nodes %d nps %d time %d pv %s\n",
+            String info = String.format(
+                    "info score cp %d depth %d nodes %d nps %d time %d pv %s",
                     eval, iteration, nodesSearched, nps, timeUsed, sb.toString());
+            handler.sendMessage(info);
             bestMove = pvArray[0];
 
             // Adjusts the aspiration window size
@@ -242,12 +244,7 @@ public class Search implements Constants {
 
         if (!useFixedDepth && --pollForStopInterval == 0) {
             pollForStopInterval = TIME_CHECK_INTERVAL;
-
-            if (System.currentTimeMillis() > (timeStarted + timeForThisMove)) {
-                System.out.printf("Time finished: %d. Movetime: %d. Time started: %d.\n",
-                        System.currentTimeMillis(), timeForThisMove, timeStarted);
-                shouldWeStop = true;
-            }
+            if (System.currentTimeMillis() > (timeStarted + timeForThisMove)) shouldWeStop = true;
         }
 
         nodesSearched++; // Increment the nodes searched

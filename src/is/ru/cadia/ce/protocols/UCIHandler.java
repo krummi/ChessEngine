@@ -28,16 +28,14 @@ public class UCIHandler implements ProtocolHandler, Constants {
     private final static int DEFAULT_MOVES_TO_GO = 28;
     private final static double ALLOCATION_PERCENTAGE = 0.0333;
 
-    // Search strategy
-    private final Search search;
-
     // Variables
 
+    private final Search search;        // Search strategy
     private Board board;                // The board associated with UCI
 
     // Opening book
     private boolean useBook;            // Are we currently using book to find moves?
-    private Book openingBook;           // The opening book we are using.
+    private Book openingBook;           // The opening book we are using
     private String bookFile;            // The book file we are using (if any)
     private String opening;             // Keeps track of the opening (used by the book)
 
@@ -56,8 +54,6 @@ public class UCIHandler implements ProtocolHandler, Constants {
 
         // Initializes the search
         search = new Search(this);
-
-        System.out.printf("Configuration: %s\n", search.getConfiguration());
 
         // TODO: May be moved away from the constructor.
         useBook = Options.getInstance().getOptionBoolean("OwnBook");
@@ -161,6 +157,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
         }
 
         if (time > timeLeft[sideToMove]) {
+
             // Can't imagine this happens often, but just in case.
             time = (int) (timeLeft[sideToMove] * 0.5);
         }
@@ -168,6 +165,10 @@ public class UCIHandler implements ProtocolHandler, Constants {
         System.out.printf("Time left: %d. Allocated time: %d\n", timeLeft[sideToMove], time);
 
         return time;
+    }
+
+    public void sendMessage(String message) {
+        System.out.println(message);
     }
 
     public void handle(String message) {
@@ -179,6 +180,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
 
             System.out.printf("id name %s %s\n", Application.NAME, Application.VERSION);
             System.out.printf("id author %s\n", Application.AUTHOR);
+            System.out.printf("debug: Configuration: %s\n", search.getConfiguration());
             System.out.println("uciok");
 
         } else if (command.equals("isready")) {
@@ -191,7 +193,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
 
         } else if (command.equals("ucinewgame")) {
 
-            // TODO: this.
+            search.transTable.clear();
 
         } else if (command.equals("position")) {
 
@@ -271,13 +273,18 @@ public class UCIHandler implements ProtocolHandler, Constants {
 
             // We don't have a book move available - go search!
             if (bestMove == Move.MOVE_NONE) {
-                bestMove = search.think(board, fixedDepth, fixedNoOfNodes);
+                bestMove = search.think(board, fixedDepth);
             }
 
-            board.make(bestMove);
             System.out.printf("bestmove %s\n", Move.toLAN(bestMove));
+            System.out.println("debug: Move integral form; " + bestMove);
+            board.make(bestMove);
 
         }
+    }
+
+    private void debug(String message) {
+        System.out.printf("");
     }
 
 }

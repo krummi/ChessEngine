@@ -137,9 +137,9 @@ public class Application implements Constants, FENs {
             int depth;
             try {
                 depth = Integer.parseInt(line.substring("pv".length() + 1));
-                System.out.println("make this move: " + Move.toLAN(search.think(board, depth, 0)));
+                System.out.println("make this move: " + Move.toLAN(search.think(board, depth)));
             } catch (Exception e) {
-                System.out.println("make this move: " + Move.toLAN(search.think(board, 3, 0)));
+                System.out.println("make this move: " + Move.toLAN(search.think(board, 3)));
             }
 
         } else if (line.equals("exit") || line.equals("quit")) {
@@ -194,7 +194,7 @@ public class Application implements Constants, FENs {
             try {
                 app.start();
             } catch (Exception ex) {
-                System.out.println("An application exception occurred.");
+                System.out.println("Error: An application exception occurred!");
                 ex.printStackTrace(System.out);
             }
 
