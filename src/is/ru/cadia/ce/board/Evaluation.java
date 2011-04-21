@@ -70,7 +70,7 @@ public class Evaluation implements Constants, SquareTables {
         int posEnd = whitePosEnd - blackPosEnd;
 
         int evaluation = material + posOpenMid + posEnd;
-        if (board.sideToMove == BLACK) { evaluation *= -1; } // TODO: refine.
+        if (board.sideToMove == BLACK) evaluation *= -1;
 
         if (debug) {
             System.out.printf("-----------------+-------+-------+---------+\n");
@@ -91,49 +91,4 @@ public class Evaluation implements Constants, SquareTables {
         return evaluation;
     }
 
-    /*public static byte[] genBoardTable(Board board, int color) {
-
-        byte[] table = new byte[128];
-
-        //for( )
-
-        for (int i = 0; i < 128; i++) {
-            if (table[i] != 0) {
-                System.out.printf(
-                        "Square %s: Attackers: %d\n", Square.SQUARE_NAMES[i], (table[i] & 7));
-            }
-        }
-
-        return table;
-    }
-
-    public static void genMovesForPawn(PieceEntry piece, byte[] table, int color) {
-
-        int[] deltas = (color == WHITE ? new int[]{NW, NE} : new int[]{SW, SE});
-        for (int i : deltas) {
-            int square = piece.square + i;
-
-            if (Board.isSquare(square)) {
-                continue;
-            }
-
-            table[square]++;
-            table[square] |= PAWN_BIT;
-        }
-    }
-
-    public static void genMovesForKnight(PieceEntry piece, byte[] table, int color) {
-
-        int[] deltas = PIECE_DELTAS[KNIGHT];
-        for (int i : deltas) {
-            int square = piece.square + i;
-
-            if (Board.isSquare(square)) {
-                continue;
-            }
-
-            table[square]++;
-            table[square] |= MINOR_BIT;
-        }
-    } */
 }

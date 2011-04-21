@@ -96,9 +96,11 @@ public class Application implements Constants, FENs {
                 depth = Integer.parseInt(line.substring("perft".length() + 1));
             } catch (Exception e) { /* doesn't matter */ }
 
+            //System.out.println("Key before: " + board.key);
             long before = System.currentTimeMillis();
             long nodes = Testing.getInstance().perft(board, depth, 0);
             long delta = System.currentTimeMillis() - before;
+            //System.out.println("Key after: " + board.key);
 
             System.out.printf("Found %d nodes in %d ms!\n", nodes, delta);
 

@@ -4,7 +4,7 @@ public interface Constants {
 
     public static final boolean DEBUG = false;
 
-    public static final int MAX_GAME_LENGTH = 300;
+    public static final int MAX_GAME_LENGTH = 500;
     public static final int MAX_PLY = 100;
 
     public static final int A1 = 0x22, B1 = 0x23, C1 = 0x24, D1 = 0x25, E1 = 0x26, F1 = 0x27, G1 = 0x28, H1 = 0x29;

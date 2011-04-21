@@ -183,6 +183,10 @@ public class UCIHandler implements ProtocolHandler, Constants {
             System.out.printf("debug: Configuration: %s\n", search.getConfiguration());
             System.out.println("uciok");
 
+        } else if (command.equals("print")) {
+
+            board.print();
+
         } else if (command.equals("isready")) {
 
             System.out.println("readyok");
@@ -201,7 +205,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
             int movePosition = -1;
             if (tokens[1].equals("startpos")) {
 
-                // TODO: worst thing ever.
+                // TODO: worst thing ever, should just somehow "reset" the board.
                 board = new Board();
                 board.initialize();
 
@@ -276,15 +280,11 @@ public class UCIHandler implements ProtocolHandler, Constants {
                 bestMove = search.think(board, fixedDepth);
             }
 
-            System.out.printf("bestmove %s\n", Move.toLAN(bestMove));
             System.out.println("debug: Move integral form; " + bestMove);
+            System.out.printf("bestmove %s\n", Move.toLAN(bestMove));
             board.make(bestMove);
 
         }
-    }
-
-    private void debug(String message) {
-        System.out.printf("");
     }
 
 }

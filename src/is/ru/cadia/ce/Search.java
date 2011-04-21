@@ -33,6 +33,8 @@ public class Search implements Constants {
 
     // Constants
 
+    private static final int CONTEMPT_FACTOR = 15; // TODO: fix this.
+    private static final int MAX_ITERATIONS = 100;
     public static final int HASH_ALPHA = 0;
     public static final int HASH_BETA = 1;
     public static final int HASH_EXACT = 2;
@@ -110,7 +112,6 @@ public class Search implements Constants {
 
         nodesSearched = 0;
         qsearched = 0;
-
         shouldWeStop = false;
         timeStarted = System.currentTimeMillis();
 
@@ -118,12 +119,12 @@ public class Search implements Constants {
         int bestMove = Move.MOVE_NONE;
         int alpha = -Value.INFINITY, beta = Value.INFINITY;
 
-        while (iteration < 60 /* TODO: FIX */) {
+        while (iteration <= MAX_ITERATIONS) {
 
             // Reset the stop poll interval:
             pollForStopInterval = TIME_CHECK_INTERVAL;
 
-            int eval = searchRoot(board, iteration, alpha, beta);
+            int eval = searchRoot(board, iteration, alpha, beta, bestMove);
 
             // Checks to see if we should stop.
             if (shouldWeStop) break;
@@ -172,7 +173,7 @@ public class Search implements Constants {
         return bestMove;
     }
 
-    public int searchRoot(Board board, int depth, int alpha, int beta) {
+    public int searchRoot(Board board, int depth, int alpha, int beta, int pvMove) {
 
         int eval = 0;
         int bestEval = -Value.INFINITY;
@@ -180,7 +181,7 @@ public class Search implements Constants {
         int bestMove = Move.MOVE_NONE;
 
         MoveSelector selector = selectors[0];
-        selector.initialize(board, Move.MOVE_NONE, board.isCheck(), false); // Not a PV search
+        selector.initialize(board, pvMove, board.isCheck(), false); // Not a PV search
 
         int move;
         while ((move = selector.getNextMove()) != Move.MOVE_NONE) {
@@ -293,7 +294,7 @@ public class Search implements Constants {
 
         // Repetition detection
 
-        if (board.isDraw()) return Value.DRAW; // TODO: Contempt factor.
+        if (board.isDraw()) return Value.DRAW;
 
         // Move generation
 
