@@ -57,6 +57,8 @@ public class UCIHandler implements ProtocolHandler, Constants {
         // Initializes the search
         search = new Search(this);
 
+        System.out.printf("Configuration: %s\n", search.getConfiguration());
+
         // TODO: May be moved away from the constructor.
         useBook = Options.getInstance().getOptionBoolean("OwnBook");
         if (useBook) {

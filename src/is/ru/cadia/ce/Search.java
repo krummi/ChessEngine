@@ -78,7 +78,6 @@ public class Search implements Constants {
         transTable.initialize();
 
         // Initializes the configuration
-
         Options options = Options.getInstance();
 
         DO_MULTI_CUT = options.getOptionBoolean("Do MultiCut");
@@ -494,7 +493,7 @@ public class Search implements Constants {
     }
 
     public String getConfiguration() {
-        return String.format("%16s: MC=%s (c: %d, e: %d, r: %d, piece: %s), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d", "Settings",
+        return String.format("MC=%s (c: %d, e: %d, r: %d, piece: %s), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d",
                 (DO_MULTI_CUT ? "on" : "off"),
                 MC_CUTOFFS,
                 MC_EXPAND,

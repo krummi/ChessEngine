@@ -222,7 +222,7 @@ public class Benchmark implements ProtocolHandler {
         double nodesPerSecond = (double) sum / (elapsed / 1000.0d);
 
         System.out.printf("\n=================\n");
-        System.out.println(search.getConfiguration());
+        System.out.printf("%16s: %s\n", "Settings", search.getConfiguration());
         for (String s : additionalInfo) {
             System.out.println(s);
         }
