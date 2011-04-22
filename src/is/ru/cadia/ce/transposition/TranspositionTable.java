@@ -58,8 +58,10 @@ public class TranspositionTable implements Constants {
     }
 
     public void put(long key, int type, int depth, int eval, int move) {
-        int hashKey = (int) (key % size);
 
+        assert move != 0 : "Move cannot be zero.";
+
+        int hashKey = (int) (key % size);
         HashEntry entry = table[hashKey];
 
         if (entry == null) {
@@ -92,6 +94,8 @@ public class TranspositionTable implements Constants {
             if (entry == null || entry.move == Move.MOVE_NONE) {
                 break;
             }
+            assert entry.move != 0;
+
             pv[b] = entry.move;
             board.make(entry.move);
             if (DEBUG) {

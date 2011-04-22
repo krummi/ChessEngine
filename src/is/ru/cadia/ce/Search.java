@@ -158,6 +158,7 @@ public class Search implements Constants {
                     eval, iteration, nodesSearched, nps, timeUsed, sb.toString());
             handler.sendMessage(info);
             bestMove = pvArray[0];
+            assert Move.isOk(bestMove) : "Invalid move: " + bestMove;
 
             // Adjusts the aspiration window size
             alpha = Math.max(eval - ASPIRATION_SIZE, -Value.INFINITY);
@@ -188,7 +189,7 @@ public class Search implements Constants {
 
             if (shouldWeStop) break;
 
-
+            // TODO: remove!
             try {
                 board.make(move);
             } catch (Exception e) {

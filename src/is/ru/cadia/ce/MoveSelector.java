@@ -108,7 +108,7 @@ public class MoveSelector {
             switch (phaseType[generationPhase]) {
 
                 case PV_MOVE:
-                    if (pvMove != Move.MOVE_NONE && board.isValidMove(pvMove, isCheck)) {
+                    if (pvMove != Move.MOVE_NONE && pvMove != 0 && board.isValidMove(pvMove, isCheck)) {
                         generationPhase++;
                         return pvMove;
                     }

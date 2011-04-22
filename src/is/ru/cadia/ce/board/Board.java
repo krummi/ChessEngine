@@ -535,7 +535,7 @@ public class Board implements Constants {
         int piece = Square.getPiece(squares[indexFrom]);
         int inc = Increment.getIncrement(indexKing - indexFrom);
 
-        assert move != Move.MOVE_NONE : "Move should not be MOVE_NONE.";
+        assert Move.isOk(move);
         assert indexFrom != Move.getTo(move) : "to != from!";
 
         // We need to handle king moves, ep-captures and checks specifically:

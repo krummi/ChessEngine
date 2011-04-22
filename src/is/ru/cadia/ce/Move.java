@@ -77,6 +77,21 @@ public class Move implements Constants {
         return type == MOVE_CAPTURE || type == MOVE_PROMOTION_CAPTURE || type == MOVE_EP_CAPTURE;
     }
 
+    public static boolean isOk(int move) {
+
+        if (move == Move.MOVE_NONE) return false;
+
+        int type = getType(move);
+        int to = getTo(move);
+        int from = getFrom(move);
+
+        if (type < 0 || type > 6) return false;
+        if (to < A1 || to > H8) return false;
+        if (from < A1 || from > H8) return false;
+
+        return true;
+    }
+
     // Short algebraic notation
 
     // The ambiguity stuff is pretty much directly stolen from Stockfish.
@@ -196,6 +211,8 @@ public class Move implements Constants {
     // Long algebraic notation
 
     public static String toLAN(int move) {
+
+        assert Move.isOk(move);
 
         String[] promotionTypes = {"", "", "n", "", "b", "r", "q"};
         return String.format(
