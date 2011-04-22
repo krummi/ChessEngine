@@ -79,6 +79,57 @@ public class Move implements Constants {
 
     // Short algebraic notation
 
+    // The ambiguity stuff is pretty much directly stolen from Stockfish.
+
+    private enum Ambiguity {
+        NONE,
+        RANK,
+        FILE,
+        BOTH
+    }
+
+    private static Ambiguity getAmbiguity(Board board, int move) {
+
+        int from = Move.getFrom(move);
+        int to = Move.getTo(move);
+        int piece = Square.getPiece(board.squares[from]);
+
+        // King moves cannot be ambiguous
+        if (piece == KING) return Ambiguity.NONE;
+
+        MoveSelector selector = new MoveSelector();
+        boolean isCheck = board.isCheck();
+        selector.initialize(board, Move.MOVE_NONE, isCheck, false);
+
+        int m;
+        int[] ambMoves = new int[8];
+
+        int i = 0;
+        while ((m = selector.getNextMove()) != Move.MOVE_NONE) {
+            if (Move.getTo(m) == to
+                    && Square.getPiece(board.squares[Move.getFrom(m)]) == piece
+                    && board.isValidMove(m, isCheck)) {
+                ambMoves[i++] = m;
+            }
+        }
+
+        assert i != 0;
+        if (i == 1) return Ambiguity.NONE;
+
+        int f = 0, r = 0;
+        for (int a = 0; a < i; a++) {
+            if (Square.getFile(Move.getFrom(ambMoves[a])) == Square.getFile(from)) f++;
+            if (Square.getRank(Move.getFrom(ambMoves[a])) == Square.getRank(from)) r++;
+        }
+
+        if (f == 1) return Ambiguity.FILE;
+        if (r == 1) return Ambiguity.RANK;
+
+        System.out.println("Banni!");
+
+        return Ambiguity.BOTH;
+    }
+
     public static String toSAN(Board board, int move) {
 
         assert move != Move.MOVE_NONE : "Cannot be a null move.";
@@ -104,7 +155,22 @@ public class Move implements Constants {
             if (piece != PAWN) {
                 sb.append(Piece.getPieceName(piece, true));
 
-                // TODO: ambiguity stuff!
+                switch (getAmbiguity(board, move)) {
+
+                case NONE:
+                    break;
+                case RANK:
+                    sb.append(Square.getRank(from));
+                    break;
+                case FILE:
+                    sb.append(Square.fileToChar(Square.getFile(from)));
+                    break;
+                case BOTH:
+                    sb.append(Square.fileToChar(Square.getFile(from)));
+                    sb.append(Square.getRank(from));
+                    break;
+
+                }
             }
             if (Move.isCapture(type)) {
                 if (piece == PAWN) sb.append(Square.fileToChar(Square.getFile(from)));
@@ -118,9 +184,10 @@ public class Move implements Constants {
             }
         }
 
-        // TODO: # for mate (we need board.isMate() for this)
         board.make(move);
-        if (board.isCheck()) sb.append("+");
+        if (board.isCheck()) {
+            sb.append(board.isMate() ? "#" : "+");
+        }
         board.retract(move);
 
         return sb.toString();
@@ -173,20 +240,20 @@ public class Move implements Constants {
             type = (type == MOVE_CAPTURE ? MOVE_PROMOTION_CAPTURE : MOVE_PROMOTION);
 
             switch (notation.charAt(4)) {
-                case 'n':
-                    promotion = KNIGHT;
-                    break;
-                case 'b':
-                    promotion = BISHOP;
-                    break;
-                case 'r':
-                    promotion = ROOK;
-                    break;
-                case 'q':
-                    promotion = QUEEN;
-                    break;
-                default:
-                    assert false : "Default case.";
+            case 'n':
+                promotion = KNIGHT;
+                break;
+            case 'b':
+                promotion = BISHOP;
+                break;
+            case 'r':
+                promotion = ROOK;
+                break;
+            case 'q':
+                promotion = QUEEN;
+                break;
+            default:
+                assert false : "Default case.";
             }
         }
 

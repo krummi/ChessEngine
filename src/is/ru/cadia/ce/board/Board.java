@@ -512,6 +512,20 @@ public class Board implements Constants {
         return isAttacked(king.get(sideToMove, 0), oppColor(sideToMove));
     }
 
+    public boolean isMate() {
+
+        boolean isCheck = isCheck();
+        if (!isCheck) return false;
+
+        MoveSelector selector = new MoveSelector();
+        selector.initialize(this, Move.MOVE_NONE, isCheck, false);
+
+        int counter = 0, move;
+        while ((move = selector.getNextMove()) != Move.MOVE_NONE) counter ++;
+
+        return counter == 0;
+    }
+
     public boolean isValidMove(int move, boolean isInCheck) {
 
         int type = Move.getType(move);

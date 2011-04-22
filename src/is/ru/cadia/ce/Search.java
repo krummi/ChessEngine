@@ -282,19 +282,18 @@ public class Search implements Constants {
             transNotFound++;
         }
 
-        int eval;
+        // Repetition detection
+
+        if (board.isDraw()) return Value.DRAW;
 
         // Horizon?
+        int eval;
 
         if (depth <= 0) {
             eval = qsearch(board, ply, alpha, beta);
             transTable.putLeaf(board.key, eval, alpha, beta);
             return eval;
         }
-
-        // Repetition detection
-
-        if (board.isDraw()) return Value.DRAW;
 
         // Move generation
 
