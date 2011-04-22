@@ -188,7 +188,12 @@ public class Search implements Constants {
 
             if (shouldWeStop) break;
 
-            board.make(move);
+
+            try {
+                board.make(move);
+            } catch (Exception e) {
+                System.out.println("Sökudólgurinn: " + move);
+            }
 
             if (evalType == HASH_EXACT) { // Do a PV-search
                 eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true);
