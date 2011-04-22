@@ -1,0 +1,35 @@
+position startpos moves e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 c1e3 e7e5
+go depth 7
+position startpos moves e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 c1e3 e7e5 d4f3 f6g4
+go depth 7
+
+
+### BEFORE THE CHANGE
+
+position startpos moves e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 c1e3 e7e5
+go depth 8
+info score cp 73 depth 1 nodes 336 nps 336 time 28 pv d4f3
+info score cp -7 depth 2 nodes 1123 nps 1123 time 112 pv d4f3 b8c6
+info score cp 18 depth 3 nodes 5466 nps 5466 time 317 pv d4f3 b8c6 f1c4
+info score cp -16 depth 4 nodes 21470 nps 21470 time 723 pv d4f3 b8c6 f1c4 c8e6
+info score cp 16 depth 5 nodes 78223 nps 64012 time 1222 pv d4f3 b8c6 f1d3 c8e6 e1g1
+info score cp -32 depth 6 nodes 513592 nps 235808 time 2178 pv d4f3 f8e7 f1c4 e8g8 e1g1 b8c6
+info score cp -20 depth 7 nodes 1682437 nps 437792 time 3843 pv d4f3 f8e7 f1c4 e8g8 e1g1 b8c6 a1c1
+info score cp -47 depth 8 nodes 13113936 nps 541070 time 24237 pv d4f3 f8e7 f1d3 e8g8 e1g1 b8c6 c3d5
+debug: Move integral form; 141968
+bestmove d4f3
+
+### AFTER THE CHANGE FROM DEPTH-PREFERRED TO ALWAYS-REPLACE:
+
+position startpos moves e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 c1e3 e7e5
+go depth 8
+info score cp 73 depth 1 nodes 336 nps 336 time 38 pv d4f3
+info score cp -7 depth 2 nodes 1168 nps 1168 time 146 pv d4f3 b8c6
+info score cp 18 depth 3 nodes 5513 nps 5513 time 287 pv d4f3 b8c6 f1c4
+info score cp -16 depth 4 nodes 21828 nps 21828 time 729 pv d4f3 b8c6 f1c4 c8e6
+info score cp 16 depth 5 nodes 114623 nps 81466 time 1407 pv d4f3 b8c6 f1d3 c8e6 e1g1
+info score cp -30 depth 6 nodes 532895 nps 211718 time 2517 pv d4f3 b8c6 f1c4 c8e6 c4d5 f8e7
+info score cp -20 depth 7 nodes 2872597 nps 438096 time 6557 pv d4f3
+info score cp -50 depth 8 nodes 42138706 nps 656529 time 64184 pv d4f3
+debug: Move integral form; 141968
+bestmove d4f3

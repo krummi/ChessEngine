@@ -193,7 +193,7 @@ public class Search implements Constants {
             try {
                 board.make(move);
             } catch (Exception e) {
-                System.out.println("Sökudólgurinn: " + move);
+                System.out.println("Sokudolgurinn: " + move);
             }
 
             if (evalType == HASH_EXACT) { // Do a PV-search

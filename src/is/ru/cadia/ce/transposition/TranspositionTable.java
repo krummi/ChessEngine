@@ -59,18 +59,27 @@ public class TranspositionTable implements Constants {
 
     public void put(long key, int type, int depth, int eval, int move) {
 
-        assert move != 0 : "Move cannot be zero.";
-
         int hashKey = (int) (key % size);
+
         HashEntry entry = table[hashKey];
 
+        // ALWAYS REPLACE SCHEME
         if (entry == null) {
+            table[hashKey] = new HashEntry(key, type, depth, eval, move);
+        } else if (entry.key == key && entry.move == Move.MOVE_NONE) {
+            entry.move = move;
+        } else {
+            table[hashKey] = new HashEntry(key, type, depth, eval, move);
+        }
+
+        // DEPTH PREFERRED --- ERRONEOUS
+        /*if (entry == null) {
             table[hashKey] = new HashEntry(key, type, depth, eval, move);
         } else if (entry.depth <= depth) {
             table[hashKey] = new HashEntry(key, type, depth, eval, move);
         } else if (entry.key == key && entry.move == Move.MOVE_NONE) {
             entry.move = move;
-        }
+        }     */
     }
 
     public void putLeaf(long key, int eval, int alpha, int beta) {
@@ -94,8 +103,6 @@ public class TranspositionTable implements Constants {
             if (entry == null || entry.move == Move.MOVE_NONE) {
                 break;
             }
-            assert entry.move != 0;
-
             pv[b] = entry.move;
             board.make(entry.move);
             if (DEBUG) {
