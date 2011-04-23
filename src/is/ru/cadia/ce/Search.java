@@ -250,12 +250,16 @@ public class Search implements Constants {
 
     public int alphaBeta(Board board, int depth, int ply, int alpha, int beta, boolean nmAllowed) {
 
+        // Time management
+
         if (!useFixedDepth && --pollForStopInterval == 0) {
             pollForStopInterval = TIME_CHECK_INTERVAL;
             if (System.currentTimeMillis() > (timeStarted + timeForThisMove)) shouldWeStop = true;
         }
 
-        nodesSearched++; // Increment the nodes searched
+        // Increment the node count
+
+        nodesSearched++;
 
         // Repetition detection
 
@@ -293,8 +297,8 @@ public class Search implements Constants {
         }
 
         // Horizon?
-        int eval;
 
+        int eval;
         if (depth <= 0) {
             eval = qsearch(board, ply, alpha, beta);
             transTable.putLeaf(board.key, eval, alpha, beta);
