@@ -198,6 +198,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
         } else if (command.equals("ucinewgame")) {
 
             search.transTable.clear();
+            search.transTable.gameNo ++; // TODO: debugging
 
         } else if (command.equals("position")) {
 
@@ -281,8 +282,14 @@ public class UCIHandler implements ProtocolHandler, Constants {
             }
 
             System.out.println("debug: Move integral form; " + bestMove);
-            System.out.printf("bestmove %s\n", Move.toLAN(bestMove));
-            board.make(bestMove);
+            String bm = Move.toLAN(bestMove);
+            if (bm.equals("e6h6")) {
+                System.out.println("This better happen.");
+            }
+            System.out.printf("bestmove %s\n", bm);
+            //board.make(bestMove);
+
+            search.transTable.generation++; // TODO: debugging
 
         }
     }

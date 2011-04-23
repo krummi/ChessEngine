@@ -5,6 +5,7 @@ import is.ru.cadia.ce.board.Evaluation;
 import is.ru.cadia.ce.other.Constants;
 import is.ru.cadia.ce.other.Options;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
+import is.ru.cadia.ce.transposition.HashEntry;
 import is.ru.cadia.ce.transposition.TranspositionTable;
 
 import java.util.ArrayList;
@@ -256,12 +257,15 @@ public class Search implements Constants {
 
         nodesSearched++; // Increment the nodes searched
 
-        boolean mcAllowed = false;
+        // Repetition detection
+
+        if (board.isDraw()) return Value.DRAW;
 
         // Transposition table lookup
 
-        TranspositionTable.HashEntry entry = transTable.get(board.key);
+        boolean mcAllowed = false;
 
+        HashEntry entry = transTable.get(board.key);
         if (entry != null) {
             transFound++;
             if (entry.depth >= depth) {
@@ -287,10 +291,6 @@ public class Search implements Constants {
         } else {
             transNotFound++;
         }
-
-        // Repetition detection
-
-        if (board.isDraw()) return Value.DRAW;
 
         // Horizon?
         int eval;
