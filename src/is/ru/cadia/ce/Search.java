@@ -305,7 +305,8 @@ public class Search implements Constants {
 
         if (DO_NULL_MOVES
                 && nmAllowed
-                && depth >= 2 && !isCheck
+                && depth >= 2
+                && !isCheck
                 && board.info.material[board.sideToMove] > board.info.pawnMaterial[board.sideToMove]) {
 
             int epSquare = board.epSquare;

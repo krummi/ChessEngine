@@ -47,7 +47,7 @@ public class Options {
                 new Option("Do LMR", true),
                 new Option("LMR FullDepthMoves", 4),
 
-                new Option("Aspiration Size", 50)
+                new Option("Aspiration Size", 80)
         };
 
         // Puts the array into the map.
@@ -95,8 +95,8 @@ public class Options {
         }
 
         // Aspiration size
-        if (params.containsKey("aspiration")) {
-            options.setOption("Aspiration Size", params.get("aspiration"));
+        if (params.containsKey("asp")) {
+            options.setOption("Aspiration Size", params.get("asp"));
         }
     }
 

@@ -36,7 +36,7 @@ public interface SquareTables extends Constants {
             -15, -5, 0,  5,  5, 0, -5, -15
     };
 
-    /*public static final int[] PAWNS_END = {
+    public static final int[] PAWNS_END = {
             150, 150, 150, 150, 150, 150, 150, 150,
             100, 100, 100, 100, 100, 100, 100, 100,
             90,  90,  90,  90,  90,  90,  90,  90,
@@ -45,8 +45,8 @@ public interface SquareTables extends Constants {
             20,  20,  20,  20,  20,  20,  20,  20,
            -10, -10, -10, -10, -10, -10, -10, -10,
             0,   0,   0,   0,   0,   0,   0,   0
-    };*/
-
+    };
+    /*
     public static final int[] PAWNS_END = {
             150, 150, 150, 150, 150, 150, 150, 150,
             50,  50,  50,  50,  50,  50,  50,  50,
@@ -56,7 +56,7 @@ public interface SquareTables extends Constants {
             0,   0,   0,   0,   0,   0,   0,   0,
             0,   0,   0,   0,   0,   0,   0,   0,
             0,   0,   0,   0,   0,   0,   0,   0
-    };
+    };*/
 
     // Knights:
     
