@@ -85,8 +85,6 @@ public class Evaluation implements Constants, SquareTables {
         // TODO: Add some kind of phase-1 lazy evaluation here?
 
         // PHASE 2:
-        //byte[] WB = genBoardTable(board, WHITE);
-        //byte[] BB = genBoardTable(board, BLACK);
 
         return evaluation;
     }

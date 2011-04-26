@@ -12,8 +12,6 @@ public class MoveSelector {
         PV_MOVE,
         CAPTURES,
         NON_CAPTURES,
-        EVASIONS,
-        QSEARCH,
         ALL,
         NONE
     }
@@ -33,12 +31,6 @@ public class MoveSelector {
             GenerationPhase.NONE
     };
 
-    // TODO: Make evasion phase generate only evasions!
-    public static final GenerationPhase[] EVASION_PHASES = {
-            GenerationPhase.ALL,
-            GenerationPhase.NONE
-    };
-
     public static final GenerationPhase[] PERFT_PHASES = {
             GenerationPhase.ALL,
             GenerationPhase.NONE
@@ -48,6 +40,9 @@ public class MoveSelector {
             GenerationPhase.CAPTURES,
             GenerationPhase.NONE
     };
+
+    // TODO: Make qsearch only generate good captures.
+    // TODO: Make evasion phase generate only evasions!
 
     // Variables
 
@@ -78,11 +73,6 @@ public class MoveSelector {
         this.generationPhase = 0;
         this.moveStack.setSize(0);
 
-        // TODO: Determine phaseType
-
-        /*if (isCheck) {
-            phaseType = EVASION_PHASES;
-        } else*/
         if (qsearch) {
             this.phaseType = QSEARCH;
         } else if (pvMove == Move.MOVE_NONE) {
@@ -155,7 +145,6 @@ public class MoveSelector {
 
         insertionSort(moveStack.moves, moveStack.getSize() - noOfMoves, noOfMoves);
     }
-
 
     public static void insertionSort(Comparable[] list, int begin, int end) {
         for (int i = begin + 1; i < end; i++) {

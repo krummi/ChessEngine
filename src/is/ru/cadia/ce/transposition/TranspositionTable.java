@@ -3,7 +3,6 @@ package is.ru.cadia.ce.transposition;
 import is.ru.cadia.ce.Move;
 import is.ru.cadia.ce.Search;
 import is.ru.cadia.ce.board.Board;
-import is.ru.cadia.ce.board.Evaluation;
 import is.ru.cadia.ce.other.Constants;
 import is.ru.cadia.ce.other.Options;
 
@@ -11,59 +10,39 @@ import java.io.*;
 
 public class TranspositionTable implements Constants {
 
-    // Types
+    // Type
 
+    public class HashEntry implements Serializable {
+        public long key;
+        public int type;
+        public int depth;
+        public int eval;
+        public int move;
+
+        HashEntry(long key, int type, int depth, int eval, int move) {
+            this.key = key;
+            this.type = type;
+            this.depth = depth;
+            this.eval = eval;
+            this.move = move;
+        }
+    }
 
     // Variables
 
     public int size;
     public HashEntry[] table;
-    public int gameNo = 1;
-    public int generation = 1;
+    public long overwrites = 0;
 
     // Functions
 
     public TranspositionTable() {
         size = Options.getInstance().getOptionInt("Hash");
-    }
-
-    public void serialize(String fileName) {
-        try {
-            FileOutputStream fileOut = new FileOutputStream(fileName + ".ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(table);
-            out.close();
-            fileOut.close();
-        } catch (IOException i) {
-            System.out.println(i.getMessage());
-            i.printStackTrace();
-        }
-    }
-
-    public void deserialize(String fileName) {
-
-        table = null;
-        try {
-            FileInputStream fileIn = new FileInputStream(fileName + ".ser");
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            table = (HashEntry[]) in.readObject();
-            in.close();
-            fileIn.close();
-        } catch (IOException i) {
-            i.printStackTrace();
-        } catch (ClassNotFoundException c) {
-            System.out.println("Some class not found....?");
-            c.printStackTrace();
-        }
-
-    }
-
-    public void initialize() {
-        table = new HashEntry[size];
+        clear();
     }
 
     public void clear() {
-        initialize();
+        table = new HashEntry[size];
     }
 
     public HashEntry get(long key) {
@@ -89,6 +68,7 @@ public class TranspositionTable implements Constants {
         } else if (entry.key == key && entry.move == Move.MOVE_NONE) {
             entry.move = move;
         } else {
+            overwrites++;
             table[hashKey] = new HashEntry(key, type, depth, eval, move);
         }
 
@@ -125,9 +105,7 @@ public class TranspositionTable implements Constants {
             }
             pv[b] = entry.move;
             board.make(entry.move);
-            if (DEBUG) {
-                Evaluation.evaluate(board, true);
-            }
+
             entry = get(board.key);
             b++;
             a--;
@@ -138,6 +116,35 @@ public class TranspositionTable implements Constants {
         }
 
         return b;
+    }
+
+    public void serialize(String fileName) {
+        try {
+            FileOutputStream fileOut = new FileOutputStream(fileName + ".ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(table);
+            out.close();
+            fileOut.close();
+        } catch (IOException i) {
+            System.out.println(i.getMessage());
+            i.printStackTrace();
+        }
+    }
+
+    public void deserialize(String fileName) {
+        table = null;
+        try {
+            FileInputStream fileIn = new FileInputStream(fileName + ".ser");
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            table = (HashEntry[]) in.readObject();
+            in.close();
+            fileIn.close();
+        } catch (IOException i) {
+            i.printStackTrace();
+        } catch (ClassNotFoundException c) {
+            System.out.println("Some class not found....?");
+            c.printStackTrace();
+        }
     }
 
 }

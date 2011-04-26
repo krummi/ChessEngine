@@ -30,8 +30,8 @@ public class Options {
 
     private Options() {
 
-        Option[] options = {
-                new Option("Hash", (2 << 18)),
+        Option[] _default = {
+                new Option("Hash", (2 << 19)),
                 new Option("OwnBook", true),
                 new Option("Book File", "openings.txt"),
 
@@ -47,11 +47,11 @@ public class Options {
                 new Option("Do LMR", true),
                 new Option("LMR FullDepthMoves", 4),
 
-                new Option("Aspiration Size", 80)
+                new Option("Aspiration Size", 50)
         };
 
         // Puts the array into the map.
-        for (Option option : options) {
+        for (Option option : _default) {
             optionsMap.put(option.key, option);
         }
     }

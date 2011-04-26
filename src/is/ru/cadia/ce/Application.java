@@ -79,7 +79,7 @@ public class Application implements Constants, FENs {
             System.out.println("evaluate          | Evaluates the current position.");
             System.out.println("pos       <fen>   | Sets the position of the board according to some fen string.");
             System.out.println("perft     <depth> | Performance test against the current board.");
-            System.out.println("perftall          | Performance test against the test-suites.");
+            System.out.println("perftall          | Performance test against many positions.");
             System.out.println("test              | For debugging purposes.");
             System.out.println("uci               | Switch to UCI mode.");
             System.out.println("exit/quit         | Exit this program.");

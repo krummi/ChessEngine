@@ -5,36 +5,35 @@ import is.ru.cadia.ce.board.Evaluation;
 import is.ru.cadia.ce.other.Constants;
 import is.ru.cadia.ce.other.Options;
 import is.ru.cadia.ce.protocols.ProtocolHandler;
-import is.ru.cadia.ce.transposition.HashEntry;
 import is.ru.cadia.ce.transposition.TranspositionTable;
 
 import java.util.ArrayList;
 
 public class Search implements Constants {
 
-    // Search configuration
+    // Search configuration (default settings can be adjusted in Options.java)
 
     // Multi-Cut
-    private static boolean DO_MULTI_CUT = true;
-    private static int MC_EXPAND = 10;
-    private static int MC_REDUCTION = 2;
-    private static int MC_CUTOFFS = 3;
-    private static boolean MC_PIECE_CHECK = false;
+    private static boolean DO_MULTI_CUT;
+    private static int MC_EXPAND;
+    private static int MC_REDUCTION;
+    private static int MC_CUTOFFS;
+    private static boolean MC_PIECE_CHECK;
 
     // Null Move
-    private static boolean DO_NULL_MOVES = true;
-    private static int NM_REDUCTION = 2;
+    private static boolean DO_NULL_MOVES;
+    private static int NM_REDUCTION;
 
     // Late-Move Reductions
-    private static boolean DO_LMR = true;
-    private static int LMR_FULL_DEPTH_MOVES = 4;
+    private static boolean DO_LMR;
+    private static int LMR_FULL_DEPTH_MOVES;
 
     // Aspiration window
-    private static int ASPIRATION_SIZE = 80;
+    private static int ASPIRATION_SIZE;
 
     // Constants
 
-    private static final int CONTEMPT_FACTOR = 15; // TODO: fix this.
+    private static final int CONTEMPT_FACTOR = 15;  // TODO: fix this.
     private static final int MAX_ITERATIONS = 100;
     public static final int HASH_ALPHA = 0;
     public static final int HASH_BETA = 1;
@@ -46,13 +45,13 @@ public class Search implements Constants {
     // Variables
 
     // Necessary data structures
-    public TranspositionTable transTable;   // A instance of a transposition table.
-    private MoveSelector[] selectors;       // The selectors used for each ply.
-    private ProtocolHandler handler;        // The ProtocolHandler-object associated
+    public TranspositionTable transTable;       // A instance of a transposition table.
+    private MoveSelector[] selectors;           // The selectors used for each ply.
+    private ProtocolHandler handler;            // The ProtocolHandler-object associated
 
     // Time management
     private int timeForThisMove, pollForStopInterval = TIME_CHECK_INTERVAL;
-    private boolean useFixedDepth = false, shouldWeStop = false;
+    private boolean useFixedDepth = false, abortSearch = false;
     private long timeStarted;
 
     // Search information
@@ -78,7 +77,6 @@ public class Search implements Constants {
 
         // Initialize transposition table: TODO: Move me?
         transTable = new TranspositionTable();
-        transTable.initialize();
 
         // Initializes the configuration
         Options options = Options.getInstance();
@@ -101,20 +99,17 @@ public class Search implements Constants {
     // Couldn't resist to steal the "think" name from Glaurung
     public int think(Board board, int depth) {
 
-        // Time management
+        // Initialization
 
+        nodesSearched = 0;
+        qsearched = 0;
+        abortSearch = false;
+        timeStarted = System.currentTimeMillis();
         useFixedDepth = (depth != 0);
 
         if (!useFixedDepth) {
             timeForThisMove = handler.getTimeForThisMove(board.sideToMove);
         }
-
-        // Initialization
-
-        nodesSearched = 0;
-        qsearched = 0;
-        shouldWeStop = false;
-        timeStarted = System.currentTimeMillis();
 
         int iteration = 1;
         int bestMove = Move.MOVE_NONE;
@@ -122,16 +117,16 @@ public class Search implements Constants {
 
         while (iteration <= MAX_ITERATIONS) {
 
-            // Reset the stop poll interval:
+            // Resets the stop poll interval
             pollForStopInterval = TIME_CHECK_INTERVAL;
 
+            // Does the search for this iteration
             int eval = searchRoot(board, iteration, alpha, beta, bestMove);
 
             // Checks to see if we should stop.
-            if (shouldWeStop) break;
+            if (abortSearch) break;
 
-            // Check if aspiration window failed, and if so: search with a wider window:
-
+            // Check if aspiration window failed, and if so; search with a wider window
             if (eval <= alpha) {
                 alpha = -Value.INFINITY;
                 continue;
@@ -152,20 +147,21 @@ public class Search implements Constants {
             double timeUsedPerSec = timeUsed / 1000d;
             int nps = (int) (timeUsedPerSec <= 1. ? nodesSearched : nodesSearched / timeUsedPerSec);
 
-            // TODO: info depth 88 score mate 2 time 17 nodes 10107 nps 594529 pv h6h7 h8h7 h5g6
+            // TODO: MATE BOUND: info depth 88 score mate 2 time 17 nodes 10107 nps 594529 pv h6h7 h8h7 h5g6
 
             String info = String.format(
                     "info score cp %d depth %d nodes %d nps %d time %d pv %s",
                     eval, iteration, nodesSearched, nps, timeUsed, sb.toString());
             handler.sendMessage(info);
             bestMove = pvArray[0];
+
             assert Move.isOk(bestMove) : "Invalid move: " + bestMove;
 
             // Adjusts the aspiration window size
             alpha = Math.max(eval - ASPIRATION_SIZE, -Value.INFINITY);
             beta = Math.min(eval + ASPIRATION_SIZE, Value.INFINITY);
 
-            // Break if we are using fixed depth and we have searched to that specific depth:
+            // Break if we are using fixed depth and we have searched to that specific depth
             if (useFixedDepth && iteration == depth) break;
 
             iteration++;
@@ -177,42 +173,39 @@ public class Search implements Constants {
 
     public int searchRoot(Board board, int depth, int alpha, int beta, int pvMove) {
 
+        // Initialization
+
         int eval = 0;
         int bestEval = -Value.INFINITY;
         int evalType = HASH_ALPHA;
         int bestMove = Move.MOVE_NONE;
 
         MoveSelector selector = selectors[0];
-        selector.initialize(board, pvMove, board.isCheck(), false); // Not a PV search
+        selector.initialize(board, pvMove, board.isCheck(), false);
 
         int move;
         while ((move = selector.getNextMove()) != Move.MOVE_NONE) {
 
-            if (shouldWeStop) break;
+            board.make(move);
 
-            // TODO: remove!
-            try {
-                board.make(move);
-            } catch (Exception e) {
-                System.out.println("Sokudolgurinn: " + move);
-            }
-
-            if (evalType == HASH_EXACT) { // Do a PV-search
+            if (evalType == HASH_EXACT) { // Does a Principal Variation Search (PVS)
                 eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true);
 
                 if (eval > alpha && eval < beta) {
                     eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true);
                 }
-            } else {
+            } else { // Normal search
                 eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true);
             }
 
             board.retract(move);
 
+            if (abortSearch) break;
+
             if (eval > bestEval) {
                 if (eval >= beta) {
                     // Beta cutoff!
-                    if (!shouldWeStop) {
+                    if (!abortSearch) {
                         transTable.put(board.key, HASH_BETA, depth, eval, move);
                     }
 
@@ -229,22 +222,16 @@ public class Search implements Constants {
             }
         }
 
-        // Checks for mate or stalemate:
-        if (bestMove == Move.MOVE_NONE) {
-            // TODO: do something if (stale)mate?
-        } else {
+        // If any move was found, put it into the transposition table
+        if (bestMove != Move.MOVE_NONE) {
             transTable.put(board.key, evalType, depth, eval, bestMove);
         }
 
         return alpha;
     }
 
+    // DEBUG
     public int mcprunes = 0;
-
-    public int one = 0;
-    public int two = 0;
-    public int three = 0;
-
     public long transFound = 0, transLessDepth = 0, transNotFound = 0, transExact = 0, transAlpha = 0, transBeta = 0;
     public long before = 0, after = 0;
 
@@ -254,7 +241,10 @@ public class Search implements Constants {
 
         if (!useFixedDepth && --pollForStopInterval == 0) {
             pollForStopInterval = TIME_CHECK_INTERVAL;
-            if (System.currentTimeMillis() > (timeStarted + timeForThisMove)) shouldWeStop = true;
+            if (System.currentTimeMillis() > (timeStarted + timeForThisMove)) {
+                abortSearch = true;
+                return 0;
+            }
         }
 
         // Increment the node count
@@ -269,7 +259,7 @@ public class Search implements Constants {
 
         boolean mcAllowed = false;
 
-        HashEntry entry = transTable.get(board.key);
+        TranspositionTable.HashEntry entry = transTable.get(board.key);
         if (entry != null) {
             transFound++;
             if (entry.depth >= depth) {
@@ -281,14 +271,7 @@ public class Search implements Constants {
                     return entry.eval; // TODO: change to return beta?
                 }
             } else {
-                /*transLessDepth++;
-                if (entry.type == HASH_EXACT) {
-                    transExact++;
-                } else if (entry.type == HASH_ALPHA && entry.eval <= alpha) {
-                    transAlpha++;
-                } else*/
                 if (entry.type == HASH_BETA && entry.eval >= beta) {
-                    //    transBeta++;
                     mcAllowed = true;
                 }
             }
@@ -320,7 +303,9 @@ public class Search implements Constants {
 
         // Null move pruning
 
-        if (DO_NULL_MOVES && nmAllowed && depth >= 2 && !isCheck
+        if (DO_NULL_MOVES
+                && nmAllowed
+                && depth >= 2 && !isCheck
                 && board.info.material[board.sideToMove] > board.info.pawnMaterial[board.sideToMove]) {
 
             int epSquare = board.epSquare;
@@ -330,14 +315,14 @@ public class Search implements Constants {
             board.retractNullMove(epSquare);
 
             if (eval >= beta) {
-                if (!shouldWeStop) {
+                if (!abortSearch) {
                     transTable.put(board.key, HASH_BETA, depth, eval, move);
                 }
                 return eval;
             }
         }
 
-        if (shouldWeStop) {
+        if (abortSearch) {
             return 0;
         }
 
@@ -348,7 +333,9 @@ public class Search implements Constants {
 
         before++;
 
-        if (DO_MULTI_CUT && depth >= MC_REDUCTION && mcAllowed) {
+        if (DO_MULTI_CUT
+                && depth >= MC_REDUCTION
+                && mcAllowed) {
 
             after++;
 
@@ -398,21 +385,24 @@ public class Search implements Constants {
 
             board.make(move);
 
-            if (evalType == HASH_EXACT) { // Do a PV-search
+            if (evalType == HASH_EXACT) { 
 
                 // Late Move Reduction
 
                 int type = Move.getType(move);
-                if (DO_LMR && movesSearched >= LMR_FULL_DEPTH_MOVES && depth >= 3 && !isCheck
-                        && !Move.isCapture(type) && !Move.isPromotion(type)) {
+                if (DO_LMR
+                        && movesSearched >= LMR_FULL_DEPTH_MOVES
+                        && depth >= 3
+                        && !isCheck
+                        && !Move.isCapture(type)
+                        && !Move.isPromotion(type)) {
                     eval = -alphaBeta(board, depth - 2, ply + 1, -alpha - 1, -alpha, true);
                 } else {
                     eval = alpha + 1;
                 }
 
                 if (eval > alpha) {
-
-                    // Principal variation search
+                    // Does a Principal Variation Search (PVS)
                     eval = -alphaBeta(board, depth - 1, ply + 1, -alpha - 1, -alpha, true);
 
                     if (eval > alpha && eval < beta) {
@@ -431,10 +421,9 @@ public class Search implements Constants {
                 if (eval >= beta) {
 
                     // Beta cutoff
-                    if (!shouldWeStop) {
+                    if (!abortSearch) {
                         transTable.put(board.key, HASH_BETA, depth, eval, move);
                     }
-
                     return beta;
                 }
 
@@ -447,7 +436,7 @@ public class Search implements Constants {
                 }
             }
 
-            if (!shouldWeStop) {
+            if (!abortSearch) {
                 transTable.put(board.key, evalType, depth, bestEval, bestMove);
             }
 

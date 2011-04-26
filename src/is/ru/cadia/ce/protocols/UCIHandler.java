@@ -198,7 +198,6 @@ public class UCIHandler implements ProtocolHandler, Constants {
         } else if (command.equals("ucinewgame")) {
 
             search.transTable.clear();
-            search.transTable.gameNo ++; // TODO: debugging
 
         } else if (command.equals("position")) {
 
@@ -287,9 +286,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
                 System.out.println("This better happen.");
             }
             System.out.printf("bestmove %s\n", bm);
-            //board.make(bestMove);
-
-            search.transTable.generation++; // TODO: debugging
+            board.make(bestMove);
 
         }
     }

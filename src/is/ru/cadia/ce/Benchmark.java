@@ -234,6 +234,7 @@ public class Benchmark implements ProtocolHandler {
         System.out.printf("%16s: %d\n", "Doing MC", search.after);
         System.out.printf("%16s: %d\n", "TransFound", search.transFound);
         System.out.printf("%16s: %d\n", "TransNotFound", search.transNotFound);
+        System.out.printf("%16s: %d\n", "Overwrites", search.transTable.overwrites);
 
     }
 
