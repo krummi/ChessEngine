@@ -12,12 +12,15 @@ public class TranspositionTable implements Constants {
 
     // Type
 
-    public class HashEntry implements Serializable {
-        public long key;
-        public int type;
-        public int depth;
-        public int eval;
-        public int move;
+    /**
+     * An object of this type should take 8+4+4+4+4 (fields) + 8 (header) = 32 bytes.
+     */
+    public class HashEntry {
+        public long key; // 8
+        public int type; // 4
+        public int depth; // 4
+        public int eval; // 4
+        public int move; // 4
 
         HashEntry(long key, int type, int depth, int eval, int move) {
             this.key = key;

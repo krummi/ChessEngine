@@ -2,34 +2,28 @@ package is.ru.cadia.ce.test;
 
 import is.ru.cadia.ce.MoveSelector;
 import is.ru.cadia.ce.MoveStackItem;
+import is.ru.cadia.ce.transposition.TranspositionTable;
+
+import java.util.Random;
 
 
 public class UnitTest {
 
     public static void main(String[] args) {
 
+        Random rand = new Random();
 
-        MoveStackItem item = new MoveStackItem();
-        item.move = 1;
-        item.score = 10;
-        MoveStackItem item2 = new MoveStackItem();
-        item2.move = 2;
-        item2.score = 50;
-        MoveStackItem item3 = new MoveStackItem();
-        item3.move = 3;
-        item3.score = 30;
-        MoveStackItem item4 = new MoveStackItem();
-        item4.move = 4;
-        item4.score = 40;
-        MoveStackItem item5 = new MoveStackItem();
-        item5.move = 5;
-        item5.score = 20;
-
-        MoveStackItem[] stack = new MoveStackItem[]{item, item2, item3, item4, item5};
-
-        MoveSelector.insertionSort(stack, 1, 4);
-
-        System.out.println("");
+        TranspositionTable table = new TranspositionTable();
+        for (int i = 0; i < table.size; i++) {
+            table.put(i, rand.nextInt(), rand.nextInt(), rand.nextInt(), rand.nextInt());
+        }
+        while (true) {
+            try {
+            Thread.sleep(10000);
+            } catch (InterruptedException ieox) {
+                System.out.println("heheh");
+            }
+        }
 
 
     }
