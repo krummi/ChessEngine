@@ -197,6 +197,7 @@ public class UCIHandler implements ProtocolHandler, Constants {
 
         } else if (command.equals("ucinewgame")) {
 
+            Runtime.getRuntime().gc();
             search.transTable.clear();
 
         } else if (command.equals("position")) {
