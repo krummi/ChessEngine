@@ -19,7 +19,7 @@ public class Application implements Constants, FENs {
     // Constants
 
     public final static String NAME = "Ziggy";
-    public final static String VERSION = "v0.6";
+    public final static String VERSION = "v0.7";
     public final static String AUTHOR = "Hrafn Eiriksson <hrafne08@ru.is>";
 
     private final BufferedReader reader;

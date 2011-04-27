@@ -126,6 +126,7 @@ public class Search implements Constants {
             // Checks to see if we should stop.
             if (abortSearch) break;
 
+            // TODO: change as on page 20 in Yngvis thesis.
             // Check if aspiration window failed, and if so; search with a wider window
             if (eval <= alpha) {
                 alpha = -Value.INFINITY;
@@ -336,6 +337,7 @@ public class Search implements Constants {
 
         if (DO_MULTI_CUT
                 && depth >= MC_REDUCTION
+                && !isCheck
                 && mcAllowed) {
 
             after++;
