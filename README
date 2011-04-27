@@ -1,30 +1,61 @@
 ###
-### Ziggy - v0.6
+### Ziggy - v0.7
 ###
 
-Description:
-============
+Description
+===========
 
 Yet another chess engine. Created with a *little* help and inspiration from other chess engines
 such as CPW, Mediocre, TSCP, Glaurung, Stockfish, Fruit, and inspirations and guides from people
 like Fritz Reul (Loop) and Ed Schröder (Rebel).
 
-Usage instructions:
-===================
+To be done
+==========
+    # C++'d - I guess. :(
+    ! Search extensions.
+    ! Deterministic mode.
+    ! Some actual parsing of UCI's options.
+    # Better transposition entries.
+    # Better transposition table (with generations, clusters of entries, etc)
+    # Only generate 'good captures' in quiescence.
+    # Dynamic R value in Null-Moves.
+    ! Killer moves
+    ? Contempt factor
+    # Endgame tablebases.
+
+Usage instructions
+==================
 
 UCI mode:
     java -jar ziggy.jar
 
 Benchmark mode:
-    java -jar ziggy.jar <bench> <type=perft | depth | suite> <file=suite/fen file> [time=time for each position (s)] [depth=fixed depth for each position]
+    java -jar ziggy.jar <bench> <type=perft | depth | suite> <file=suite/fen file>
+                        [time=time for each position (s)] [depth=fixed depth for each position]
 
-Both:
-    Multi-Cut, Null-Moves and Late-Move Reductions are by-default enabled, but can be disabled in both modes by:
+Both modes:
+    In both UCI and benchmark mode there are a number of settings which can be adjusted
+    as requested.
 
-    mc=off  (turns Multi-Cut off)
-    nm=off  (turns Null-Moves off)
-    lmr=off (turns Late-Move Reductions off)
+    Setting                           Default    Description
+    --------------------------------- -------- --------------------------------------------------
+    mc=<on | off>                     on       Turns Multi-Cut on or off.
+    |   mc_cutoffs=int                3        Sets MCs C param.
+    |   mc_expand=int                 10       Sets MCs E param.
+    |   mc_reduction=int              2        Sets MCs R param.
+    |   mc_piece=<on | off>           off      Turns MCs piece-check on or off.
+    nm=<on | off>                     on       Turns NMs pruning on or off.
+    |   nm_reduction=int              2        Sets NMs R param.
+    lmr=<on | off>                    on       Turns LMR on or off.
+    |   lmr_fdm=int                   4        Sets the no. of full depth moves in LMR.
+    asp=int                           50       Sets the size of the aspiration window.
 
 Examples:
-    java -jar ziggy.jar bench type=suite file=wac.txt time=10    <- Will run the test-suite Win At Chess, with a time constraints ("umhugsunartími?") of 10 seconds per position.
-    java -jar ziggy.jar bench type=suite file=wac.txt depth=7    <- Same, but with a fixed depth of 7 instead of time constraints.
+    java -jar ziggy.jar bench type=suite file=wac.txt time=10
+    -- Will run the test-suite Win At Chess, with a time constraints of 10 seconds per position.
+
+    java -jar ziggy.jar bench type=suite file=wac.txt depth=7
+    -- Same, but with a fixed depth of 7 instead of time constraints.
+
+    java -jar ziggy.jar bench type=suite file=wac.txt depth=7 lmr=off nm=off mc=off
+    -- Same, but without LMR, NM- and MC pruning.
