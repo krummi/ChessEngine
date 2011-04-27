@@ -1,9 +1,5 @@
 package is.ru.cadia.ce.test;
 
-import is.ru.cadia.ce.MoveSelector;
-import is.ru.cadia.ce.MoveStackItem;
-import is.ru.cadia.ce.transposition.TranspositionTable;
-
 import java.util.Random;
 
 
@@ -13,7 +9,7 @@ public class UnitTest {
 
         Random rand = new Random();
 
-        TranspositionTable table = new TranspositionTable();
+        NewTranspositionTable table = new NewTranspositionTable();
         for (int i = 0; i < table.size; i++) {
             table.put(i, rand.nextInt(), rand.nextInt(), rand.nextInt(), rand.nextInt());
         }
