@@ -35,9 +35,10 @@ public class Search implements Constants {
 
     private static final int CONTEMPT_FACTOR = 15;  // TODO: fix this.
     private static final int MAX_ITERATIONS = 100;
-    public static final int HASH_ALPHA = 0;
-    public static final int HASH_BETA = 1;
-    public static final int HASH_EXACT = 2;
+
+    public static final int NODE_ALL = 0;
+    public static final int NODE_CUT = 1;
+    public static final int NODE_PV = 2;
 
     // Time management
     private static final int TIME_CHECK_INTERVAL = 1000;
@@ -178,7 +179,7 @@ public class Search implements Constants {
 
         int eval = 0;
         int bestEval = -Value.INFINITY;
-        int evalType = HASH_ALPHA;
+        int nodeType = NODE_ALL;
         int bestMove = Move.MOVE_NONE;
 
         MoveSelector selector = selectors[0];
@@ -189,7 +190,7 @@ public class Search implements Constants {
 
             board.make(move);
 
-            if (evalType == HASH_EXACT) { // Does a Principal Variation Search (PVS)
+            if (nodeType == NODE_PV) { // Does a Principal Variation Search (PVS)
                 eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true);
 
                 if (eval > alpha && eval < beta) {
@@ -207,7 +208,7 @@ public class Search implements Constants {
                 if (eval >= beta) {
                     // Beta cutoff!
                     if (!abortSearch) {
-                        transTable.put(board.key, HASH_BETA, depth, eval, move);
+                        transTable.put(board.key, NODE_CUT, depth, eval, move);
                     }
 
                     return beta;
@@ -217,7 +218,7 @@ public class Search implements Constants {
                 bestMove = move;
 
                 if (eval > alpha) {
-                    evalType = HASH_EXACT;
+                    nodeType = NODE_PV;
                     alpha = eval;
                 }
             }
@@ -225,7 +226,7 @@ public class Search implements Constants {
 
         // If any move was found, put it into the transposition table
         if (bestMove != Move.MOVE_NONE) {
-            transTable.put(board.key, evalType, depth, eval, bestMove);
+            transTable.put(board.key, nodeType, depth, eval, bestMove);
         }
 
         return alpha;
@@ -264,15 +265,15 @@ public class Search implements Constants {
         if (entry != null) {
             transFound++;
             if (entry.depth >= depth) {
-                if (entry.type == HASH_EXACT) {
+                if (entry.type == NODE_PV) {
                     return entry.eval;
-                } else if (entry.type == HASH_ALPHA && entry.eval <= alpha) {
+                } else if (entry.type == NODE_ALL && entry.eval <= alpha) {
                     return entry.eval; // TODO: change to return alpha?
-                } else if (entry.type == HASH_BETA && entry.eval >= beta) {
+                } else if (entry.type == NODE_CUT && entry.eval >= beta) {
                     return entry.eval; // TODO: change to return beta?
                 }
             } else {
-                if ((entry.type == HASH_BETA || entry.type == HASH_EXACT) && entry.eval >= beta) {
+                if (entry.type == NODE_CUT && entry.eval >= beta) {
                     mcAllowed = true;
                 }
             }
@@ -318,7 +319,7 @@ public class Search implements Constants {
 
             if (eval >= beta) {
                 if (!abortSearch) {
-                    transTable.put(board.key, HASH_BETA, depth, eval, move);
+                    transTable.put(board.key, NODE_CUT, depth, eval, move);
                 }
                 return eval;
             }
@@ -328,7 +329,7 @@ public class Search implements Constants {
             return 0;
         }
 
-        int bestEval = -Value.INFINITY, bestMove = Move.MOVE_NONE, evalType = HASH_ALPHA;
+        int bestEval = -Value.INFINITY, bestMove = Move.MOVE_NONE, nodeType = NODE_ALL;
         int[] moveQueue = new int[MC_EXPAND];
         moveQueue[0] = move;
         int queueIndex = 0, queueSize = 0;
@@ -387,7 +388,7 @@ public class Search implements Constants {
 
             board.make(move);
 
-            if (evalType == HASH_EXACT) {
+            if (nodeType == NODE_PV) {
 
                 // Late Move Reduction
 
@@ -424,7 +425,7 @@ public class Search implements Constants {
 
                     // Beta cutoff
                     if (!abortSearch) {
-                        transTable.put(board.key, HASH_BETA, depth, eval, move);
+                        transTable.put(board.key, NODE_CUT, depth, eval, move);
                     }
                     return beta;
                 }
@@ -433,13 +434,13 @@ public class Search implements Constants {
                 bestMove = move;
 
                 if (eval > alpha) {
-                    evalType = HASH_EXACT;
+                    nodeType = NODE_PV;
                     alpha = eval;
                 }
             }
 
             if (!abortSearch) {
-                transTable.put(board.key, evalType, depth, bestEval, bestMove);
+                transTable.put(board.key, nodeType, depth, bestEval, bestMove);
             }
 
             // Get then next move from the queue or from the move stack, if the queue is empty:
