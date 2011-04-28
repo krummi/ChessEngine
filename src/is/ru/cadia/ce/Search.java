@@ -356,7 +356,7 @@ public class Search implements Constants {
             while (true) {
 
                 int from = Move.getFrom(move);
-                boolean causedCutoff = false;
+                //boolean causedCutoff = false;
 
                 // Distinguish between MC_PIECE_CHECK on and off;
                 if ((MC_PIECE_CHECK && !cuts.contains(from)) || !MC_PIECE_CHECK) {
@@ -367,7 +367,7 @@ public class Search implements Constants {
 
                     if (eval >= beta) {
 
-                        causedCutoff = true;
+                        //causedCutoff = true;
                         if (MC_PIECE_CHECK) cuts.add(from);
 
                         if (++c == MC_CUTOFFS) {
@@ -381,11 +381,11 @@ public class Search implements Constants {
 
                 }
 
-                if (causedCutoff) {
-                    moves.add(c - 1, move);
-                } else {
+                //if (causedCutoff) {
+                //    moves.add(c - 1, move);
+                //} else {
                     moves.addLast(move);
-                }
+                //}
 
                 if (moves.size() == MC_EXPAND) break;
 
