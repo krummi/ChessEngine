@@ -272,7 +272,7 @@ public class Search implements Constants {
                     return entry.eval; // TODO: change to return beta?
                 }
             } else {
-                if (entry.type == HASH_BETA && entry.eval >= beta) {
+                if ((entry.type == HASH_BETA || entry.type == HASH_EXACT) && entry.eval >= beta) {
                     mcAllowed = true;
                 }
             }
@@ -359,9 +359,8 @@ public class Search implements Constants {
                     if (eval >= beta) {
 
                         if (MC_PIECE_CHECK) cuts.add(piece);
-                        c++;
 
-                        if (c == MC_CUTOFFS) {
+                        if (++c == MC_CUTOFFS) {
                             mcprunes++;
                             return beta;
                         }
@@ -388,7 +387,7 @@ public class Search implements Constants {
 
             board.make(move);
 
-            if (evalType == HASH_EXACT) { 
+            if (evalType == HASH_EXACT) {
 
                 // Late Move Reduction
 
