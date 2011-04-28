@@ -12,18 +12,18 @@ public class Board implements Constants {
     // Types
 
     public class EvaluationInfo {
-        public int gamePhase;
         public int material[];
         public int pawnMaterial[];
         public int openMidPositioning[];
         public int endPositioning[];
+        public int gamePhase;
 
         private EvaluationInfo() {
-            this.gamePhase = PHASE_OPENING;
             this.material = new int[]{0, 0}; // White, Black;
             this.pawnMaterial = new int[]{0, 0};
             this.openMidPositioning = new int[]{0, 0}; // Sum of piece squares for opening/middle.
             this.endPositioning = new int[]{0, 0}; // Sum of piece square for the end game.
+            this.gamePhase = 0;
         }
     }
 
@@ -627,15 +627,18 @@ public class Board implements Constants {
             info.pawnMaterial[color] += Value.getPieceValue(PAWN);
         } else if (piece != KING) {
             info.material[color] += Value.getPieceValue(piece);
+            info.gamePhase += Value.getPhaseValue(piece);
         }
 
         // Increase this sides piece-square-sum-score:
         if (color == WHITE) {
-            info.openMidPositioning[color] += Evaluation.OPEN_MID_POSITIONING[piece - 1][color][SquareTables.REVERSE_TABLE[square]];
+            int revSquare = SquareTables.REVERSE_TABLE[square];
+            info.openMidPositioning[color] += Evaluation.OPEN_MID_POSITIONING[piece - 1][color][revSquare];
+            info.endPositioning[color] += Evaluation.END_POSITIONING[piece - 1][color][revSquare];
         } else {
             info.openMidPositioning[color] += Evaluation.OPEN_MID_POSITIONING[piece - 1][color][square];
+            info.endPositioning[color] += Evaluation.END_POSITIONING[piece - 1][color][square];
         }
-        info.endPositioning[color] += Evaluation.END_POSITIONING[piece - 1][color][square];
 
         // TODO: End - this does not need to be here.
 
@@ -680,17 +683,20 @@ public class Board implements Constants {
             info.pawnMaterial[color] -= Value.getPieceValue(PAWN);
         } else if (piece != KING) {
             info.material[color] -= Value.getPieceValue(piece);
+            info.gamePhase -= Value.getPhaseValue(piece);
         }
 
         // Decrease this sides piece-square-sum-score:
         if (color == WHITE) {
-            info.openMidPositioning[color] -=
-                    Evaluation.OPEN_MID_POSITIONING[piece - 1][color][SquareTables.REVERSE_TABLE[square]];
+            int revSquare = SquareTables.REVERSE_TABLE[square];
+            info.openMidPositioning[color] -= Evaluation.OPEN_MID_POSITIONING[piece - 1][color][revSquare];
+            info.endPositioning[color] -= Evaluation.END_POSITIONING[piece - 1][color][revSquare];
         } else {
             info.openMidPositioning[color] -= Evaluation.OPEN_MID_POSITIONING[piece - 1][color][square];
+            info.endPositioning[color] -= Evaluation.END_POSITIONING[piece - 1][color][square];
         }
 
-        info.endPositioning[color] -= Evaluation.END_POSITIONING[piece - 1][color][square];
+
 
         // Updates the indicis table:
         int index = indicis[square];

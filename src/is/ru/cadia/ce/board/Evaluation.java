@@ -1,6 +1,7 @@
 package is.ru.cadia.ce.board;
 
 import is.ru.cadia.ce.SquareTables;
+import is.ru.cadia.ce.Value;
 import is.ru.cadia.ce.other.Constants;
 
 public class Evaluation implements Constants, SquareTables {
@@ -24,7 +25,9 @@ public class Evaluation implements Constants, SquareTables {
                 BISHOPS_OPEN_MID, ROOKS_OPEN_MID, QUEENS_OPEN_MID};
 
         for (int piece = PAWN; piece < openingMiddleTables.length; piece++) {
-            // TODO: Reverse the table for BLACK!
+
+            // TODO: This doesn't make any sense at all
+            // (1)
             for (int color = 0; color < NO_OF_COLORS; color++) {
                 for (int square = (Board.NO_OF_FILES * Board.UPPER_BORDER_SIZE) + Board.LEFT_BORDER_SIZE, index = 0;
                      square < Board.NO_OF_SQUARES - (Board.LOWER_BORDER_SIZE * Board.NO_OF_FILES);
@@ -46,7 +49,7 @@ public class Evaluation implements Constants, SquareTables {
                      square < Board.NO_OF_SQUARES - (Board.LOWER_BORDER_SIZE * Board.NO_OF_FILES);
                      square += Board.NO_OF_FILES, index++) {
 
-                    System.arraycopy(openingMiddleTables[piece], index * 8, END_POSITIONING[piece - 1][color], square, 8);
+                    System.arraycopy(endTables[piece], index * 8, END_POSITIONING[piece - 1][color], square, 8);
 
                 }
             }
@@ -54,6 +57,10 @@ public class Evaluation implements Constants, SquareTables {
     }
 
     public static int evaluate(Board board, boolean debug) {
+
+        // Gets the phase
+        int phase = board.info.gamePhase;
+        int initial = Value.INITIAL_PHASE;
 
         // Calculates the material balance:
         int whiteMaterial = board.info.material[WHITE] + board.info.pawnMaterial[WHITE];
@@ -69,16 +76,23 @@ public class Evaluation implements Constants, SquareTables {
         int blackPosEnd = board.info.endPositioning[BLACK];
         int posEnd = whitePosEnd - blackPosEnd;
 
-        int evaluation = material + posOpenMid + posEnd;
+        // Interpolates between the open/middle game and the end game.
+        int whiteInterpolated = (whitePosOpenMid * phase + whitePosEnd * (initial - phase)) / initial;
+        int blackInterpolated = (blackPosOpenMid * phase + blackPosEnd * (initial - phase)) / initial;
+        int posInterpolated = whiteInterpolated - blackInterpolated;
+
+        int evaluation = material + posInterpolated;
         if (board.sideToMove == BLACK) evaluation *= -1;
 
         if (debug) {
             System.out.printf("-----------------+-------+-------+---------+\n");
             System.out.printf("Eval. method     | White | Black | Balance |\n");
             System.out.printf("-----------------+-------+-------+---------+\n");
+            System.out.printf("Game phase       |%6d/%d\n", phase, initial);
             System.out.printf("Material         |%6d |%6d |%8d |\n", whiteMaterial, blackMaterial, material);
             System.out.printf("Pos (open/mid)   |%6d |%6d |%8d |\n", whitePosOpenMid, blackPosOpenMid, posOpenMid);
             System.out.printf("Pos (end)        |%6d |%6d |%8d |\n", whitePosEnd, blackPosEnd, posEnd);
+            System.out.printf("Interpolated pos |%6d |%6d |%8d |\n", whiteInterpolated, blackInterpolated, posInterpolated);
             System.out.printf(">>> Final score:  %d\n", evaluation);
         }
 

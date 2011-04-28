@@ -8,6 +8,7 @@ import is.ru.cadia.ce.protocols.ProtocolHandler;
 import is.ru.cadia.ce.transposition.TranspositionTable;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class Search implements Constants {
 
@@ -169,6 +170,7 @@ public class Search implements Constants {
             iteration++;
         }
 
+        System.out.printf("Phase: %d/%d\n", board.info.gamePhase, Value.INITIAL_PHASE);
         assert bestMove != Move.MOVE_NONE;
         return bestMove;
     }
@@ -329,10 +331,14 @@ public class Search implements Constants {
             return 0;
         }
 
-        int bestEval = -Value.INFINITY, bestMove = Move.MOVE_NONE, nodeType = NODE_ALL;
-        int[] moveQueue = new int[MC_EXPAND];
-        moveQueue[0] = move;
-        int queueIndex = 0, queueSize = 0;
+        int bestEval = -Value.INFINITY;
+        int bestMove = Move.MOVE_NONE;
+        int nodeType = NODE_ALL;
+        LinkedList<Integer> moves = null;
+
+        //int[] moveQueue = new int[MC_EXPAND];
+        //moveQueue[0] = move;
+        //int queueIndex = 0, queueSize = 0;
 
         before++;
 
@@ -343,15 +349,17 @@ public class Search implements Constants {
 
             after++;
 
-            int c = 0;
             ArrayList<Integer> cuts = new ArrayList<Integer>(MC_CUTOFFS);
+            moves = new LinkedList<Integer>();
+            int c = 0;
 
             while (true) {
 
-                int piece = Move.getFrom(move);
+                int from = Move.getFrom(move);
+                boolean causedCutoff = false;
 
                 // Distinguish between MC_PIECE_CHECK on and off;
-                if ((MC_PIECE_CHECK && !cuts.contains(piece)) || !MC_PIECE_CHECK) {
+                if ((MC_PIECE_CHECK && !cuts.contains(from)) || !MC_PIECE_CHECK) {
 
                     board.make(move);
                     eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true);
@@ -359,27 +367,37 @@ public class Search implements Constants {
 
                     if (eval >= beta) {
 
-                        if (MC_PIECE_CHECK) cuts.add(piece);
+                        causedCutoff = true;
+                        if (MC_PIECE_CHECK) cuts.add(from);
 
                         if (++c == MC_CUTOFFS) {
                             mcprunes++;
+                            //if (!abortSearch) {
+                            //    transTable.put(board.key, NODE_CUT, depth, eval, Move.MOVE_NONE);
+                            //}
                             return beta;
                         }
                     }
 
                 }
 
-                queueIndex++;
-                if (queueIndex == MC_EXPAND) break;
+                if (causedCutoff) {
+                    moves.add(c - 1, move);
+                } else {
+                    moves.addLast(move);
+                }
+
+                if (moves.size() == MC_EXPAND) break;
 
                 move = selector.getNextMove();
                 if (move == Move.MOVE_NONE) break;
-                moveQueue[queueIndex] = move;
+                //moveQueue[queueIndex] = move;
             }
 
-            queueSize = queueIndex;
-            queueIndex = 0;
-            move = moveQueue[queueIndex++];
+            //queueSize = queueIndex;
+            //queueIndex = 0;
+            //move = moveQueue[queueIndex++];
+            move = moves.removeFirst();
         }
 
         int movesSearched = 0;
@@ -444,11 +462,17 @@ public class Search implements Constants {
             }
 
             // Get then next move from the queue or from the move stack, if the queue is empty:
-            if (queueSize <= queueIndex) {
+            /*if (queueSize <= queueIndex) {
                 move = selector.getNextMove();
                 if (move == Move.MOVE_NONE) break;
             } else {
                 move = moveQueue[queueIndex++];
+            }*/
+            if (moves != null && !moves.isEmpty()) {
+                move = moves.removeFirst();
+            } else {
+                move = selector.getNextMove();
+                if (move == Move.MOVE_NONE) break;
             }
         }
 
