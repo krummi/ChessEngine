@@ -520,8 +520,8 @@ public class Board implements Constants {
         MoveSelector selector = new MoveSelector();
         selector.initialize(this, Move.MOVE_NONE, isCheck, false);
 
-        int counter = 0, move;
-        while ((move = selector.getNextMove()) != Move.MOVE_NONE) counter ++;
+        int counter = 0;
+        while (selector.getNextMove() != Move.MOVE_NONE) counter ++;
 
         return counter == 0;
     }

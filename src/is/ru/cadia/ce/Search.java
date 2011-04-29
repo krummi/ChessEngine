@@ -170,7 +170,6 @@ public class Search implements Constants {
             iteration++;
         }
 
-        System.out.printf("Phase: %d/%d\n", board.info.gamePhase, Value.INITIAL_PHASE);
         assert bestMove != Move.MOVE_NONE;
         return bestMove;
     }
@@ -356,7 +355,7 @@ public class Search implements Constants {
             while (true) {
 
                 int from = Move.getFrom(move);
-                //boolean causedCutoff = false;
+                boolean causedCutoff = false;
 
                 // Distinguish between MC_PIECE_CHECK on and off;
                 if ((MC_PIECE_CHECK && !cuts.contains(from)) || !MC_PIECE_CHECK) {
