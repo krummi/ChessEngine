@@ -58,7 +58,7 @@ public class Evaluation implements Constants, SquareTables {
 
     public static int evaluate(Board board, boolean debug) {
 
-        // Gets the phase
+        // Retrieves the phase
         int phase = board.info.gamePhase;
         int initial = Value.INITIAL_PHASE;
 
@@ -67,7 +67,7 @@ public class Evaluation implements Constants, SquareTables {
         int blackMaterial = board.info.material[BLACK] + board.info.pawnMaterial[BLACK];
         int material = whiteMaterial - blackMaterial;
 
-        // Calculate the positioning balance (for the opening/middle-game and the end-game):
+        // Retrieves the piece-square table scores for the openening/middle- and the end game.
         int whitePosOpenMid = board.info.openMidPositioning[WHITE];
         int blackPosOpenMid = board.info.openMidPositioning[BLACK];
         int posOpenMid = whitePosOpenMid - blackPosOpenMid;
@@ -76,7 +76,7 @@ public class Evaluation implements Constants, SquareTables {
         int blackPosEnd = board.info.endPositioning[BLACK];
         int posEnd = whitePosEnd - blackPosEnd;
 
-        // Interpolates between the open/middle game and the end game.
+        // Interpolates piece-square table scores between the open/middle- and the end game.
         int whiteInterpolated = (whitePosOpenMid * phase + whitePosEnd * (initial - phase)) / initial;
         int blackInterpolated = (blackPosOpenMid * phase + blackPosEnd * (initial - phase)) / initial;
         int posInterpolated = whiteInterpolated - blackInterpolated;

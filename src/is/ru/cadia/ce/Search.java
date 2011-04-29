@@ -235,7 +235,7 @@ public class Search implements Constants {
 
     // DEBUG
     public int mcprunes = 0;
-    public long transFound = 0, transLessDepth = 0, transNotFound = 0, transExact = 0, transAlpha = 0, transBeta = 0;
+    public long transFound = 0, transNotFound = 0;
     public long before = 0, after = 0;
 
     public int alphaBeta(Board board, int depth, int ply, int alpha, int beta, boolean nmAllowed) {
@@ -386,8 +386,10 @@ public class Search implements Constants {
                     moves.addLast(move);
                 //}
 
+                // Checks if we have reached the amount of moves to expand when checking for a mc-prune.
                 if (moves.size() == MC_EXPAND) break;
 
+                // Retrieves the next move, breaking if none are left.
                 move = selector.getNextMove();
                 if (move == Move.MOVE_NONE) break;
                 //moveQueue[queueIndex] = move;
