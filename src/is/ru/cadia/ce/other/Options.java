@@ -40,6 +40,8 @@ public class Options {
                 new Option("MC Expand", 10),
                 new Option("MC Reduction", 2),
                 new Option("MC Piece", false),
+                new Option("MC Reorder", false),
+                new Option("MC UseTrans", false),
 
                 new Option("Do NullMove", true),
                 new Option("NM Reduction", 2),
@@ -76,6 +78,12 @@ public class Options {
         }
         if (params.containsKey("mc_piece")) {
             options.setOption("MC Piece", params.get("mc_piece").equals("on"));
+        }
+        if (params.containsKey("mc_reorder")) {
+            options.setOption("MC Reorder", params.get("mc_reorder").equals("on"));
+        }
+        if (params.containsKey("mc_usetrans")) {
+            options.setOption("MC UseTrans", params.get("mc_usetrans").equals("on"));
         }
 
         // Null moves

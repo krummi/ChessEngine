@@ -41,16 +41,18 @@ Both modes:
     Setting                           Default  Description
     --------------------------------- -------- --------------------------------------------------
     mc=<on | off>                     on       Turns Multi-Cut on or off.
-    |   mc_cutoffs=int                3        Sets MCs C param.
-    |   mc_expand=int                 10       Sets MCs E param.
-    |   mc_reduction=int              2        Sets MCs R param.
-    |   mc_piece=<on | off>           off      Turns MCs piece-check on or off.
+        mc_cutoffs=int                3        Sets MCs C param.
+        mc_expand=int                 10       Sets MCs E param.
+        mc_reduction=int              2        Sets MCs R param.
+        mc_piece=<on | off>           off      Turns MCs piece-check on or off.
+        mc_reorder=<on | off>         off      Turns MCs reordering of cut nodes on or off.
+        mc_usetrans=<on | off>        off      Will use the transposition table with MC.
 
     nm=<on | off>                     on       Turns NMs pruning on or off.
-    |   nm_reduction=int              2        Sets NMs R param.
+        nm_reduction=int              2        Sets NMs R param.
 
     lmr=<on | off>                    on       Turns LMR on or off.
-    |   lmr_fdm=int                   4        Sets the no. of full depth moves in LMR.
+        lmr_fdm=int                   4        Sets the no. of full depth moves in LMR.
 
     asp=int                           50       Sets the size of the aspiration window.
 

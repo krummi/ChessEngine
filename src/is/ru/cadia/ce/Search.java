@@ -20,6 +20,8 @@ public class Search implements Constants {
     private static int MC_REDUCTION;
     private static int MC_CUTOFFS;
     private static boolean MC_PIECE_CHECK;
+    private static boolean MC_REORDER;
+    private static boolean MC_USE_TRANS;
 
     // Null Move
     private static boolean DO_NULL_MOVES;
@@ -34,7 +36,6 @@ public class Search implements Constants {
 
     // Constants
 
-    private static final int CONTEMPT_FACTOR = 15;  // TODO: fix this.
     private static final int MAX_ITERATIONS = 100;
 
     public static final int NODE_ALL = 0;
@@ -88,6 +89,8 @@ public class Search implements Constants {
         MC_EXPAND = options.getOptionInt("MC Expand");
         MC_REDUCTION = options.getOptionInt("MC Reduction");
         MC_PIECE_CHECK = options.getOptionBoolean("MC Piece");
+        MC_REORDER = options.getOptionBoolean("MC Reorder");
+        MC_USE_TRANS = options.getOptionBoolean("MC UseTrans");
 
         DO_NULL_MOVES = options.getOptionBoolean("Do NullMove");
         NM_REDUCTION = options.getOptionInt("NM Reduction");
@@ -274,7 +277,9 @@ public class Search implements Constants {
                     return entry.eval; // TODO: change to return beta?
                 }
             } else {
-                if (entry.type == NODE_CUT && entry.eval >= beta) {
+                /*if (entry.type == NODE_PV ) {
+                    mcAllowed = true;
+                } else*/ if (entry.type == NODE_CUT && entry.eval >= beta) {
                     mcAllowed = true;
                 }
             }
@@ -366,25 +371,25 @@ public class Search implements Constants {
 
                     if (eval >= beta) {
 
-                        //causedCutoff = true;
+                        if (MC_REORDER) causedCutoff = true;
                         if (MC_PIECE_CHECK) cuts.add(from);
 
                         if (++c == MC_CUTOFFS) {
                             mcprunes++;
-                            //if (!abortSearch) {
-                            //    transTable.put(board.key, NODE_CUT, depth, eval, Move.MOVE_NONE);
-                            //}
+                            if (MC_USE_TRANS && !abortSearch) {
+                                transTable.put(board.key, NODE_CUT, depth, eval, Move.MOVE_NONE);
+                            }
                             return beta;
                         }
                     }
 
                 }
 
-                //if (causedCutoff) {
-                //    moves.add(c - 1, move);
-                //} else {
+                if (causedCutoff) {
+                    moves.add(c - 1, move);
+                } else {
                     moves.addLast(move);
-                //}
+                }
 
                 // Checks if we have reached the amount of moves to expand when checking for a mc-prune.
                 if (moves.size() == MC_EXPAND) break;
@@ -517,12 +522,14 @@ public class Search implements Constants {
     }
 
     public String getConfiguration() {
-        return String.format("MC=%s (c: %d, e: %d, r: %d, piece: %s), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d",
+        return String.format("MC=%s (c: %d, e: %d, r: %d, piece: %s, reorder: %s, usetrans: %s), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d",
                 (DO_MULTI_CUT ? "on" : "off"),
                 MC_CUTOFFS,
                 MC_EXPAND,
                 MC_REDUCTION,
                 (MC_PIECE_CHECK ? "on" : "off"),
+                (MC_REORDER ? "on" : "off"),
+                (MC_USE_TRANS ? "on" : "off"),
                 (DO_NULL_MOVES ? "on" : "off"),
                 NM_REDUCTION,
                 (DO_LMR ? "on" : "off"),
