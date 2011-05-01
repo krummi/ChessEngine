@@ -6,6 +6,13 @@ public class Options {
 
     // Types
 
+    public enum MultiCutApplication {
+        CUT,
+        TRANS,
+        OR,
+        AND
+    }
+
     class Option {
         public String key;
         public Object value;
@@ -42,6 +49,7 @@ public class Options {
                 new Option("MC Piece", false),
                 new Option("MC Reorder", false),
                 new Option("MC UseTrans", false),
+                new Option("MC Apply", "trans"),
 
                 new Option("Do NullMove", true),
                 new Option("NM Reduction", 2),
@@ -84,6 +92,9 @@ public class Options {
         }
         if (params.containsKey("mc_usetrans")) {
             options.setOption("MC UseTrans", params.get("mc_usetrans").equals("on"));
+        }
+        if (params.containsKey("mc_apply")) {
+            options.setOption("MC Apply", params.get("mc_apply"));
         }
 
         // Null moves

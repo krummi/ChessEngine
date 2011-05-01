@@ -22,6 +22,7 @@ public class Search implements Constants {
     private static boolean MC_PIECE_CHECK;
     private static boolean MC_REORDER;
     private static boolean MC_USE_TRANS;
+    private static Options.MultiCutApplication MC_APPLY;
 
     // Null Move
     private static boolean DO_NULL_MOVES;
@@ -82,6 +83,8 @@ public class Search implements Constants {
         transTable = new TranspositionTable();
 
         // Initializes the configuration
+        // TODO: make it impossible to enter incorrect values.
+        // TODO: create Utils.reportFatalError()
         Options options = Options.getInstance();
 
         DO_MULTI_CUT = options.getOptionBoolean("Do MultiCut");
@@ -91,6 +94,20 @@ public class Search implements Constants {
         MC_PIECE_CHECK = options.getOptionBoolean("MC Piece");
         MC_REORDER = options.getOptionBoolean("MC Reorder");
         MC_USE_TRANS = options.getOptionBoolean("MC UseTrans");
+
+        String mcApply = options.getOptionString("MC Apply");
+        if (mcApply.equals("cut")) {
+            MC_APPLY = Options.MultiCutApplication.CUT;
+        } else if (mcApply.equals("trans")) {
+            MC_APPLY = Options.MultiCutApplication.TRANS;
+        } else if (mcApply.equals("or")) {
+            MC_APPLY = Options.MultiCutApplication.OR;
+        } else if (mcApply.equals("and")) {
+            MC_APPLY = Options.MultiCutApplication.AND;
+        } else {
+            System.out.println("Error: Incorrect mc_apply parameter.");
+            System.exit(-1);
+        }
 
         DO_NULL_MOVES = options.getOptionBoolean("Do NullMove");
         NM_REDUCTION = options.getOptionInt("NM Reduction");
@@ -195,13 +212,13 @@ public class Search implements Constants {
             board.make(move);
 
             if (nodeType == NODE_PV) { // Does a Principal Variation Search (PVS)
-                eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true);
+                eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true, true);
 
                 if (eval > alpha && eval < beta) {
-                    eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true);
+                    eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true, true);
                 }
             } else { // Normal search
-                eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true);
+                eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true, true);
             }
 
             board.retract(move);
@@ -238,10 +255,9 @@ public class Search implements Constants {
 
     // DEBUG
     public int mcprunes = 0;
-    public long transFound = 0, transNotFound = 0;
     public long before = 0, after = 0;
 
-    public int alphaBeta(Board board, int depth, int ply, int alpha, int beta, boolean nmAllowed) {
+    public int alphaBeta(Board board, int depth, int ply, int alpha, int beta, boolean nmAllowed, boolean mcAllowed) {
 
         // Time management
 
@@ -263,11 +279,10 @@ public class Search implements Constants {
 
         // Transposition table lookup
 
-        boolean mcAllowed = false;
+        if (MC_APPLY == Options.MultiCutApplication.TRANS) mcAllowed = false;
 
         TranspositionTable.HashEntry entry = transTable.get(board.key);
         if (entry != null) {
-            transFound++;
             if (entry.depth >= depth) {
                 if (entry.type == NODE_PV) {
                     return entry.eval;
@@ -276,16 +291,25 @@ public class Search implements Constants {
                 } else if (entry.type == NODE_CUT && entry.eval >= beta) {
                     return entry.eval; // TODO: change to return beta?
                 }
-            } else {
-                /*if (entry.type == NODE_PV ) {
-                    mcAllowed = true;
-                } else*/ if (entry.type == NODE_CUT && entry.eval >= beta) {
-                    mcAllowed = true;
+            } else if (MC_APPLY != Options.MultiCutApplication.CUT) {
+
+                // Determines whether to apply Multi-Cut or not.
+
+                boolean shallowFailHigh = (entry.type == NODE_CUT && entry.eval >= beta);
+                switch (MC_APPLY) {
+                case TRANS:
+                    mcAllowed = shallowFailHigh;
+                    break;
+                case OR:
+                    mcAllowed = mcAllowed || shallowFailHigh;
+                    break;
+                case AND:
+                    mcAllowed = mcAllowed && shallowFailHigh;
+                    break;
                 }
             }
-        } else {
-            transNotFound++;
         }
+
 
         // Horizon?
 
@@ -320,7 +344,7 @@ public class Search implements Constants {
             int epSquare = board.epSquare;
 
             board.makeNullMove();
-            eval = -alphaBeta(board, depth - NM_REDUCTION, ply + 1, -beta, -beta + 1, false);
+            eval = -alphaBeta(board, depth - NM_REDUCTION, ply + 1, -beta, -beta + 1, false, true);
             board.retractNullMove(epSquare);
 
             if (eval >= beta) {
@@ -332,7 +356,7 @@ public class Search implements Constants {
         }
 
         if (abortSearch) {
-            return 0;
+            return Value.DRAW;
         }
 
         int bestEval = -Value.INFINITY;
@@ -340,16 +364,14 @@ public class Search implements Constants {
         int nodeType = NODE_ALL;
         LinkedList<Integer> moves = null;
 
-        //int[] moveQueue = new int[MC_EXPAND];
-        //moveQueue[0] = move;
-        //int queueIndex = 0, queueSize = 0;
-
         before++;
 
+        // Multi-Cut pruning
+
         if (DO_MULTI_CUT
+                && mcAllowed
                 && depth >= MC_REDUCTION
-                && !isCheck
-                && mcAllowed) {
+                && !isCheck) {
 
             after++;
 
@@ -366,11 +388,10 @@ public class Search implements Constants {
                 if ((MC_PIECE_CHECK && !cuts.contains(from)) || !MC_PIECE_CHECK) {
 
                     board.make(move);
-                    eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true);
+                    eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true, false);
                     board.retract(move);
 
                     if (eval >= beta) {
-
                         if (MC_REORDER) causedCutoff = true;
                         if (MC_PIECE_CHECK) cuts.add(from);
 
@@ -400,9 +421,6 @@ public class Search implements Constants {
                 //moveQueue[queueIndex] = move;
             }
 
-            //queueSize = queueIndex;
-            //queueIndex = 0;
-            //move = moveQueue[queueIndex++];
             move = moves.removeFirst();
         }
 
@@ -423,21 +441,21 @@ public class Search implements Constants {
                         && !isCheck
                         && !Move.isCapture(type)
                         && !Move.isPromotion(type)) {
-                    eval = -alphaBeta(board, depth - 2, ply + 1, -alpha - 1, -alpha, true);
+                    eval = -alphaBeta(board, depth - 2, ply + 1, -alpha - 1, -alpha, true, true);
                 } else {
                     eval = alpha + 1;
                 }
 
                 if (eval > alpha) {
                     // Does a Principal Variation Search (PVS)
-                    eval = -alphaBeta(board, depth - 1, ply + 1, -alpha - 1, -alpha, true);
+                    eval = -alphaBeta(board, depth - 1, ply + 1, -alpha - 1, -alpha, true, true);
 
                     if (eval > alpha && eval < beta) {
-                        eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true);
+                        eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true, true);
                     }
                 }
             } else {
-                eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true);
+                eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true, true);
             }
 
             board.retract(move);
@@ -468,12 +486,6 @@ public class Search implements Constants {
             }
 
             // Get then next move from the queue or from the move stack, if the queue is empty:
-            /*if (queueSize <= queueIndex) {
-                move = selector.getNextMove();
-                if (move == Move.MOVE_NONE) break;
-            } else {
-                move = moveQueue[queueIndex++];
-            }*/
             if (moves != null && !moves.isEmpty()) {
                 move = moves.removeFirst();
             } else {
@@ -522,7 +534,7 @@ public class Search implements Constants {
     }
 
     public String getConfiguration() {
-        return String.format("MC=%s (c: %d, e: %d, r: %d, piece: %s, reorder: %s, usetrans: %s), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d",
+        return String.format("MC=%s (c: %d, e: %d, r: %d, piece: %s, reorder: %s, usetrans: %s, apply: %s), NM=%s (r: %d), LMR=%s (fdm: %d), AspSize: %d",
                 (DO_MULTI_CUT ? "on" : "off"),
                 MC_CUTOFFS,
                 MC_EXPAND,
@@ -530,6 +542,7 @@ public class Search implements Constants {
                 (MC_PIECE_CHECK ? "on" : "off"),
                 (MC_REORDER ? "on" : "off"),
                 (MC_USE_TRANS ? "on" : "off"),
+                MC_APPLY.getClass().getSimpleName(),
                 (DO_NULL_MOVES ? "on" : "off"),
                 NM_REDUCTION,
                 (DO_LMR ? "on" : "off"),

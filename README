@@ -39,7 +39,7 @@ Both modes:
     as requested.
 
     Setting                           Default  Description
-    --------------------------------- -------- --------------------------------------------------
+    --------------------------------- -------- ----------------------------------------------------
     mc=<on | off>                     on       Turns Multi-Cut on or off.
         mc_cutoffs=int                3        Sets MCs C param.
         mc_expand=int                 10       Sets MCs E param.
@@ -47,6 +47,12 @@ Both modes:
         mc_piece=<on | off>           off      Turns MCs piece-check on or off.
         mc_reorder=<on | off>         off      Turns MCs reordering of cut nodes on or off.
         mc_usetrans=<on | off>        off      Will use the transposition table with MC.
+        mc_apply=
+           <cut | trans | or | and>   trans    Where to apply MC.
+                                               - cut:   At expected cut nodes.
+                                               - trans: When a shallower search indicates b-cutoff.
+                                               - or:    If either condition holds.
+                                               - and:   If both conditions hold.
 
     nm=<on | off>                     on       Turns NMs pruning on or off.
         nm_reduction=int              2        Sets NMs R param.
