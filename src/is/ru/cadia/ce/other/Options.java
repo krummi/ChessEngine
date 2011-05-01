@@ -9,8 +9,7 @@ public class Options {
     public enum MultiCutApplication {
         CUT,
         TRANS,
-        OR,
-        AND
+        CUT_OR_TRANS
     }
 
     class Option {

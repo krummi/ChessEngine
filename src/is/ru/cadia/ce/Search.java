@@ -101,9 +101,7 @@ public class Search implements Constants {
         } else if (mcApply.equals("trans")) {
             MC_APPLY = Options.MultiCutApplication.TRANS;
         } else if (mcApply.equals("or")) {
-            MC_APPLY = Options.MultiCutApplication.OR;
-        } else if (mcApply.equals("and")) {
-            MC_APPLY = Options.MultiCutApplication.AND;
+            MC_APPLY = Options.MultiCutApplication.CUT_OR_TRANS;
         } else {
             System.out.println("Error: Incorrect mc_apply parameter.");
             System.exit(-1);
@@ -294,17 +292,14 @@ public class Search implements Constants {
             } else if (MC_APPLY != Options.MultiCutApplication.CUT) {
 
                 // Determines whether to apply Multi-Cut or not.
-
                 boolean shallowFailHigh = (entry.type == NODE_CUT && entry.eval >= beta);
+
                 switch (MC_APPLY) {
                 case TRANS:
                     mcAllowed = shallowFailHigh;
                     break;
-                case OR:
+                case CUT_OR_TRANS:
                     mcAllowed = mcAllowed || shallowFailHigh;
-                    break;
-                case AND:
-                    mcAllowed = mcAllowed && shallowFailHigh;
                     break;
                 }
             }
@@ -542,7 +537,7 @@ public class Search implements Constants {
                 (MC_PIECE_CHECK ? "on" : "off"),
                 (MC_REORDER ? "on" : "off"),
                 (MC_USE_TRANS ? "on" : "off"),
-                MC_APPLY.getClass().getSimpleName(),
+                MC_APPLY.name(),
                 (DO_NULL_MOVES ? "on" : "off"),
                 NM_REDUCTION,
                 (DO_LMR ? "on" : "off"),
