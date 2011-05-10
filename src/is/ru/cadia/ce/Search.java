@@ -39,9 +39,13 @@ public class Search implements Constants {
 
     private static final int MAX_ITERATIONS = 100;
 
-    public static final int NODE_ALL = 0;
+    public static final int SCORE_ALL = 0;
+    public static final int SCORE_CUT = 1;
+    public static final int SCORE_EXACT = 2;
+
+    public static final int NODE_ALL = -1;
+    public static final int NODE_PV = 0;
     public static final int NODE_CUT = 1;
-    public static final int NODE_PV = 2;
 
     // Time management
     private static final int TIME_CHECK_INTERVAL = 1000;
@@ -198,7 +202,7 @@ public class Search implements Constants {
 
         int eval = 0;
         int bestEval = -Value.INFINITY;
-        int nodeType = NODE_ALL;
+        int scoreType = SCORE_ALL;
         int bestMove = Move.MOVE_NONE;
 
         MoveSelector selector = selectors[0];
@@ -209,14 +213,14 @@ public class Search implements Constants {
 
             board.make(move);
 
-            if (nodeType == NODE_PV) { // Does a Principal Variation Search (PVS)
-                eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, true, true);
+            if (scoreType == SCORE_EXACT) { // Does a Principal Variation Search (PVS)
+                eval = -alphaBeta(board, depth - 1, 1, -alpha - 1, -alpha, NODE_CUT, true);
 
                 if (eval > alpha && eval < beta) {
-                    eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true, true);
+                    eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, NODE_PV, true);
                 }
             } else { // Normal search
-                eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, true, true);
+                eval = -alphaBeta(board, depth - 1, 1, -beta, -alpha, NODE_PV, true);
             }
 
             board.retract(move);
@@ -227,7 +231,7 @@ public class Search implements Constants {
                 if (eval >= beta) {
                     // Beta cutoff!
                     if (!abortSearch) {
-                        transTable.put(board.key, NODE_CUT, depth, eval, move);
+                        transTable.put(board.key, SCORE_CUT, depth, eval, move);
                     }
 
                     return beta;
@@ -237,7 +241,7 @@ public class Search implements Constants {
                 bestMove = move;
 
                 if (eval > alpha) {
-                    nodeType = NODE_PV;
+                    scoreType = SCORE_EXACT;
                     alpha = eval;
                 }
             }
@@ -245,7 +249,7 @@ public class Search implements Constants {
 
         // If any move was found, put it into the transposition table
         if (bestMove != Move.MOVE_NONE) {
-            transTable.put(board.key, nodeType, depth, eval, bestMove);
+            transTable.put(board.key, scoreType, depth, eval, bestMove);
         }
 
         return alpha;
@@ -255,7 +259,7 @@ public class Search implements Constants {
     public int mcprunes = 0;
     public long before = 0, after = 0;
 
-    public int alphaBeta(Board board, int depth, int ply, int alpha, int beta, boolean nmAllowed, boolean mcAllowed) {
+    public int alphaBeta(Board board, int depth, int ply, int alpha, int beta, int nodeType, boolean nmAllowed) {
 
         // Time management
 
@@ -277,22 +281,23 @@ public class Search implements Constants {
 
         // Transposition table lookup
 
+        boolean mcAllowed = (nodeType == NODE_CUT);
         if (MC_APPLY == Options.MultiCutApplication.TRANS) mcAllowed = false;
 
         TranspositionTable.HashEntry entry = transTable.get(board.key);
         if (entry != null) {
             if (entry.depth >= depth) {
-                if (entry.type == NODE_PV) {
+                if (entry.type == SCORE_EXACT) {
                     return entry.eval;
-                } else if (entry.type == NODE_ALL && entry.eval <= alpha) {
+                } else if (entry.type == SCORE_ALL && entry.eval <= alpha) {
                     return entry.eval; // TODO: change to return alpha?
-                } else if (entry.type == NODE_CUT && entry.eval >= beta) {
+                } else if (entry.type == SCORE_CUT && entry.eval >= beta) {
                     return entry.eval; // TODO: change to return beta?
                 }
             } else if (MC_APPLY != Options.MultiCutApplication.CUT) {
 
                 // Determines whether to apply Multi-Cut or not.
-                boolean shallowFailHigh = (entry.type == NODE_CUT && entry.eval >= beta);
+                boolean shallowFailHigh = (entry.type == SCORE_CUT && entry.eval >= beta);
 
                 switch (MC_APPLY) {
                 case TRANS:
@@ -331,6 +336,7 @@ public class Search implements Constants {
         // Null move pruning
 
         if (DO_NULL_MOVES
+                && nodeType != NODE_PV
                 && nmAllowed
                 && depth >= 2
                 && !isCheck
@@ -339,12 +345,12 @@ public class Search implements Constants {
             int epSquare = board.epSquare;
 
             board.makeNullMove();
-            eval = -alphaBeta(board, depth - NM_REDUCTION, ply + 1, -beta, -beta + 1, false, true);
+            eval = -alphaBeta(board, depth - NM_REDUCTION, ply + 1, -beta, -beta + 1, -nodeType, false);
             board.retractNullMove(epSquare);
 
             if (eval >= beta) {
                 if (!abortSearch) {
-                    transTable.put(board.key, NODE_CUT, depth, eval, move);
+                    transTable.put(board.key, SCORE_CUT, depth, eval, move);
                 }
                 return eval;
             }
@@ -354,19 +360,17 @@ public class Search implements Constants {
             return Value.DRAW;
         }
 
-        int bestEval = -Value.INFINITY;
-        int bestMove = Move.MOVE_NONE;
-        int nodeType = NODE_ALL;
-        LinkedList<Integer> moves = null;
-
-        before++;
-
         // Multi-Cut pruning
 
+        LinkedList<Integer> moves = null;
+        before++;
+
         if (DO_MULTI_CUT
+                && nodeType != NODE_PV
                 && mcAllowed
                 && depth >= MC_REDUCTION
-                && !isCheck) {
+                && !isCheck
+                && board.info.material[board.sideToMove] > board.info.pawnMaterial[board.sideToMove]) {
 
             after++;
 
@@ -383,7 +387,7 @@ public class Search implements Constants {
                 if ((MC_PIECE_CHECK && !cuts.contains(from)) || !MC_PIECE_CHECK) {
 
                     board.make(move);
-                    eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, true, false);
+                    eval = -alphaBeta(board, depth - 1 - MC_REDUCTION, ply + 1, -beta, -alpha, -nodeType, true);
                     board.retract(move);
 
                     if (eval >= beta) {
@@ -393,7 +397,7 @@ public class Search implements Constants {
                         if (++c == MC_CUTOFFS) {
                             mcprunes++;
                             if (MC_USE_TRANS && !abortSearch) {
-                                transTable.put(board.key, NODE_CUT, depth, eval, Move.MOVE_NONE);
+                                transTable.put(board.key, SCORE_CUT, depth, eval, Move.MOVE_NONE);
                             }
                             return beta;
                         }
@@ -419,38 +423,43 @@ public class Search implements Constants {
             move = moves.removeFirst();
         }
 
+        int bestEval = -Value.INFINITY;
+        int bestMove = Move.MOVE_NONE;
+        int scoreType = SCORE_ALL;
         int movesSearched = 0;
 
         while (true) {
 
             board.make(move);
 
-            if (nodeType == NODE_PV) {
+            //if (scoreType == SCORE_EXACT) {
+            if (nodeType != NODE_PV || scoreType != SCORE_EXACT) { // Normal search
+                eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, -nodeType, true);
+            } else {
 
-                // Late Move Reduction
+                // Late Move Reductions
 
                 int type = Move.getType(move);
                 if (DO_LMR
+                        && nodeType != NODE_PV
                         && movesSearched >= LMR_FULL_DEPTH_MOVES
                         && depth >= 3
                         && !isCheck
                         && !Move.isCapture(type)
                         && !Move.isPromotion(type)) {
-                    eval = -alphaBeta(board, depth - 2, ply + 1, -alpha - 1, -alpha, true, true);
+                    eval = -alphaBeta(board, depth - 2, ply + 1, -alpha - 1, -alpha, -nodeType, true);
                 } else {
                     eval = alpha + 1;
                 }
 
                 if (eval > alpha) {
                     // Does a Principal Variation Search (PVS)
-                    eval = -alphaBeta(board, depth - 1, ply + 1, -alpha - 1, -alpha, true, true);
+                    eval = -alphaBeta(board, depth - 1, ply + 1, -alpha - 1, -alpha, NODE_CUT, true);
 
                     if (eval > alpha && eval < beta) {
-                        eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true, true);
+                        eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, NODE_PV, true);
                     }
                 }
-            } else {
-                eval = -alphaBeta(board, depth - 1, ply + 1, -beta, -alpha, true, true);
             }
 
             board.retract(move);
@@ -462,7 +471,7 @@ public class Search implements Constants {
 
                     // Beta cutoff
                     if (!abortSearch) {
-                        transTable.put(board.key, NODE_CUT, depth, eval, move);
+                        transTable.put(board.key, SCORE_CUT, depth, eval, move);
                     }
                     return beta;
                 }
@@ -471,16 +480,18 @@ public class Search implements Constants {
                 bestMove = move;
 
                 if (eval > alpha) {
-                    nodeType = NODE_PV;
+                    scoreType = SCORE_EXACT;
                     alpha = eval;
                 }
             }
 
+            if (nodeType == NODE_CUT) nodeType = NODE_ALL;
+
             if (!abortSearch) {
-                transTable.put(board.key, nodeType, depth, bestEval, bestMove);
+                transTable.put(board.key, scoreType, depth, bestEval, bestMove);
             }
 
-            // Get then next move from the queue or from the move stack, if the queue is empty:
+            // Get the next move from the queue or from the move stack, if the queue is empty:
             if (moves != null && !moves.isEmpty()) {
                 move = moves.removeFirst();
             } else {

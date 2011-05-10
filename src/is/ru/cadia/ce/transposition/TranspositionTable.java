@@ -104,11 +104,11 @@ public class TranspositionTable implements Constants {
     public void putLeaf(long key, int eval, int alpha, int beta) {
 
         if (eval >= beta) {
-            put(key, Search.NODE_CUT, 0, eval, Move.MOVE_NONE);
+            put(key, Search.SCORE_CUT, 0, eval, Move.MOVE_NONE);
         } else if (eval <= alpha) {
-            put(key, Search.NODE_ALL, 0, eval, Move.MOVE_NONE);
+            put(key, Search.SCORE_ALL, 0, eval, Move.MOVE_NONE);
         } else {
-            put(key, Search.NODE_PV, 0, eval, Move.MOVE_NONE);
+            put(key, Search.SCORE_EXACT, 0, eval, Move.MOVE_NONE);
         }
 
     }

@@ -13,6 +13,7 @@ To be done
 ==========
     # C++'d - I guess. :(
     ! Search extensions.
+    ! Fix memory issues.
     ! Deterministic mode.
     ! Some actual parsing of UCI's options.
     # Better transposition entries.
@@ -47,7 +48,7 @@ Both modes:
         mc_piece=<on | off>           off      Turns MCs piece-check on or off.
         mc_reorder=<on | off>         off      Turns MCs reordering of cut nodes on or off.
         mc_usetrans=<on | off>        off      Will use the transposition table with MC.
-        mc_apply=<cut | trans | or>   trans    Where to apply MC.
+        mc_apply=<cut | trans | or>   trans    Where to apply MC:
                                                - cut:   At expected cut nodes.
                                                - trans: When a shallower search indicates fail-high.
                                                - or:    If either condition holds.
