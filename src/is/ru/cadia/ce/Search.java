@@ -369,8 +369,7 @@ public class Search implements Constants {
                 && nodeType != NODE_PV
                 && mcAllowed
                 && depth >= MC_REDUCTION
-                && !isCheck
-                && board.info.material[board.sideToMove] > board.info.pawnMaterial[board.sideToMove]) {
+                && !isCheck) {
 
             after++;
 
